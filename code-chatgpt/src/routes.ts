@@ -82,7 +82,7 @@ router.post('/chatgpt', async (req: Request, res: Response) => {
       } finally {
         res.end();
       }
-    }, 3000); // Delay of 3000 milliseconds (3 seconds)
+    }, 1000); // Delay of 3000 milliseconds (3 seconds)
   }
 });
 

@@ -79,7 +79,7 @@ router.post('/gemini', async (req: Request, res: Response) => {
       } finally {
         res.end();
       }
-    }, 3000);
+    }, 1000);
   }
 });
 
