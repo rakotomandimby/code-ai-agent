@@ -8,18 +8,33 @@ export default class GeminiRepository {
   constructor() {
     this.db = new Database('/tmp/gemini.sqlite');
   }
-  clear() {
-    this.db.exec('CREATE TABLE IF NOT EXISTS messages (id INTEGER , role TEXT, content TEXT)');
-    this.db.exec('CREATE TABLE IF NOT EXISTS system_instruction (id INTEGER , content TEXT)');
-    this.db.exec('CREATE TABLE IF NOT EXISTS model_to_use (id INTEGER , content TEXT)');
-    this.db.exec('CREATE TABLE IF NOT EXISTS temperature (id INTEGER , content TEXT)');
-    this.db.exec('CREATE TABLE IF NOT EXISTS top_p (id INTEGER , content TEXT)');
-    this.db.run('DELETE FROM messages');
-    this.db.run('DELETE FROM system_instruction');
-    this.db.run('DELETE FROM model_to_use');
-    this.db.run('DELETE FROM temperature');
-    this.db.run('DELETE FROM top_p');
+
+
+
+  clear(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.db.serialize(() => {  // <-- Key change: Use serialize
+        this.db.run('CREATE TABLE IF NOT EXISTS messages (id INTEGER , role TEXT, content TEXT)');
+        this.db.run('CREATE TABLE IF NOT EXISTS system_instruction (id INTEGER , content TEXT)');
+        this.db.run('CREATE TABLE IF NOT EXISTS model_to_use (id INTEGER , content TEXT)');
+        this.db.run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER , content TEXT)');
+        this.db.run('CREATE TABLE IF NOT EXISTS top_p (id INTEGER , content TEXT)');
+        this.db.run('DELETE FROM messages');
+        this.db.run('DELETE FROM system_instruction');
+        this.db.run('DELETE FROM model_to_use');
+        this.db.run('DELETE FROM temperature');
+        this.db.run('DELETE FROM top_p', (err) => { // Callback for the last operation
+          if (err) {
+            reject(err); // Reject if there's an error
+          } else {
+            resolve(); // Resolve when done
+          }
+        });
+      });
+    });
   }
+
+
   // Method to save the ChatGPT messages
   save(data: Chunk) {
     if (data.kind === 'message') {
@@ -115,6 +130,14 @@ export default class GeminiRepository {
     this.db.exec('CREATE TABLE IF NOT EXISTS top_p (id INTEGER , content TEXT)');
   }
   close() {
-    this.db.close();
+    return new Promise<void>((resolve, reject) => {
+    // Close the Database
+    this.db.close((err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
   }
 }
