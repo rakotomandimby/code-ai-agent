@@ -10,29 +10,29 @@ export default class ChatGPTRepository {
   }
 
 
-
   clear(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      this.db.serialize(() => {  // <-- Key change: Use serialize
-        this.db.run('CREATE TABLE IF NOT EXISTS messages (id INTEGER , role TEXT, content TEXT)');
-        this.db.run('CREATE TABLE IF NOT EXISTS system_instruction (id INTEGER , content TEXT)');
-        this.db.run('CREATE TABLE IF NOT EXISTS model_to_use (id INTEGER , content TEXT)');
-        this.db.run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER , content TEXT)');
-        this.db.run('CREATE TABLE IF NOT EXISTS top_p (id INTEGER , content TEXT)');
-        this.db.run('DELETE FROM messages');
-        this.db.run('DELETE FROM system_instruction');
-        this.db.run('DELETE FROM model_to_use');
-        this.db.run('DELETE FROM temperature');
-        this.db.run('DELETE FROM top_p', (err) => { // Callback for the last operation
-          if (err) {
-            reject(err); // Reject if there's an error
-          } else {
-            resolve(); // Resolve when done
-          }
-        });
+      this.db.serialize(() => {
+        this.db.run('CREATE TABLE IF NOT EXISTS messages (id INTEGER , role TEXT, content TEXT)')
+          .run('CREATE TABLE IF NOT EXISTS system_instruction (id INTEGER , content TEXT)')
+          .run('CREATE TABLE IF NOT EXISTS model_to_use (id INTEGER , content TEXT)')
+          .run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER , content TEXT)')
+          .run('CREATE TABLE IF NOT EXISTS top_p (id INTEGER , content TEXT)')
+          .run('DELETE FROM messages')
+          .run('DELETE FROM system_instruction')
+          .run('DELETE FROM model_to_use')
+          .run('DELETE FROM temperature')
+          .run('DELETE FROM top_p', (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
       });
     });
   }
+
 
 
   // Method to save the ChatGPT messages
@@ -153,13 +153,25 @@ export default class ChatGPTRepository {
       });
     });
   } 
-  init() {
-    this.db.exec('CREATE TABLE IF NOT EXISTS messages (id INTEGER , role TEXT, content TEXT)');
-    this.db.exec('CREATE TABLE IF NOT EXISTS system_instruction (id INTEGER , content TEXT)');
-    this.db.exec('CREATE TABLE IF NOT EXISTS model_to_use (id INTEGER , content TEXT)');
-    this.db.exec('CREATE TABLE IF NOT EXISTS temperature (id INTEGER , content TEXT)');
-    this.db.exec('CREATE TABLE IF NOT EXISTS top_p (id INTEGER , content TEXT)');
+
+  init(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.db.serialize(() => {
+        this.db.run('CREATE TABLE IF NOT EXISTS messages (id INTEGER , role TEXT, content TEXT)')
+          .run('CREATE TABLE IF NOT EXISTS system_instruction (id INTEGER , content TEXT)')
+          .run('CREATE TABLE IF NOT EXISTS model_to_use (id INTEGER , content TEXT)')
+          .run('CREATE TABLE IF NOT EXISTS temperature (id INTEGER , content TEXT)')
+          .run('CREATE TABLE IF NOT EXISTS top_p (id INTEGER , content TEXT)', (err) => { // Callback on the last operation
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+      });
+    });
   }
+
 
   close() {
     return new Promise<void>((resolve, reject) => {

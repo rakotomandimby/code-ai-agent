@@ -55,34 +55,32 @@ router.post('/chatgpt', async (req: Request, res: Response) => {
   }
 
   if (JSONBody.length === 0) {
-    setTimeout(async () => {
-      try {
-        let b = new ChatGPTBody();
-        let mtt = await repository.getMultiTurnChat();
-        b.setMultiTurnChat(mtt);
+    try {
+      let b = new ChatGPTBody();
+      let mtt = await repository.getMultiTurnChat();
+      b.setMultiTurnChat(mtt);
 
-        let si = await repository.getSystemInstruction();
-        b.setSystemInstruction(si);
+      let si = await repository.getSystemInstruction();
+      b.setSystemInstruction(si);
 
-        let mtu = await repository.getModelToUse();
-        b.setModelToUse(mtu);
+      let mtu = await repository.getModelToUse();
+      b.setModelToUse(mtu);
 
-        let t = await repository.getTemperature();
-        b.setTemperature(parseFloat(t));
+      let t = await repository.getTemperature();
+      b.setTemperature(parseFloat(t));
 
-        let tp = await repository.getTopP();
-        b.setTopP(parseFloat(tp));
+      let tp = await repository.getTopP();
+      b.setTopP(parseFloat(tp));
 
-        let aiHttpClient = new AIHttpClient('chatgpt');
-        aiHttpClient.setBody(b.getBody());
-        let response = await aiHttpClient.post();
-        res.send(response);
-      } catch (err) {
-        res.status(500).send(err);
-      } finally {
-        res.end();
-      }
-    }, 1000); // Delay of 1000 milliseconds (3 seconds)
+      let aiHttpClient = new AIHttpClient('chatgpt');
+      aiHttpClient.setBody(b.getBody());
+      let response = await aiHttpClient.post();
+      res.send(response);
+    } catch (err) {
+      res.status(500).send(err);
+    } finally {
+      res.end();
+    }
   }
 });
 

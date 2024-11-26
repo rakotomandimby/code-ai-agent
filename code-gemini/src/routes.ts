@@ -55,31 +55,29 @@ router.post('/gemini', async (req: Request, res: Response) => {
   }
 
   if (JSONBody.length === 0) {
-    setTimeout(async () => {
-      try {
-        let b = new GeminiBody();
-        let mtt = await repository.getMultiTurnChat();
-        b.setMultiTurnChat(mtt);
+    try {
+      let b = new GeminiBody();
+      let mtt = await repository.getMultiTurnChat();
+      b.setMultiTurnChat(mtt);
 
-        let si = await repository.getSystemInstruction();
-        b.setSystemInstruction(si);
+      let si = await repository.getSystemInstruction();
+      b.setSystemInstruction(si);
 
-        let t = await repository.getTemperature();
-        b.setTemperature(parseFloat(t));
+      let t = await repository.getTemperature();
+      b.setTemperature(parseFloat(t));
 
-        let tp = await repository.getTopP();
-        b.setTopP(parseFloat(tp));
+      let tp = await repository.getTopP();
+      b.setTopP(parseFloat(tp));
 
-        let aiHttpClient = new AIHttpClient('gemini');
-        aiHttpClient.setBody(b.getBody());
-        let response = await aiHttpClient.post();
-        res.send(response);
-      } catch (err) {
-        res.status(500).send(err);
-      } finally {
-        res.end();
-      }
-    }, 1000);
+      let aiHttpClient = new AIHttpClient('gemini');
+      aiHttpClient.setBody(b.getBody());
+      let response = await aiHttpClient.post();
+      res.send(response);
+    } catch (err) {
+      res.status(500).send(err);
+    } finally {
+      res.end();
+    }
   }
 });
 
