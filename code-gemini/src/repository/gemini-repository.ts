@@ -129,15 +129,16 @@ export default class GeminiRepository {
     this.db.exec('CREATE TABLE IF NOT EXISTS temperature (id INTEGER , content TEXT)');
     this.db.exec('CREATE TABLE IF NOT EXISTS top_p (id INTEGER , content TEXT)');
   }
+  
   close() {
     return new Promise<void>((resolve, reject) => {
-    // Close the Database
-    this.db.close((err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
+      this.db.close((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
   }
 }

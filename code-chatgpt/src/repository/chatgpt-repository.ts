@@ -151,15 +151,13 @@ export default class ChatGPTRepository {
 
   close() {
     return new Promise<void>((resolve, reject) => {
-    // Close the Database
-    this.db.close((err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
+      this.db.close((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
   }
-  }
-
 }
