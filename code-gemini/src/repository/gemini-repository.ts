@@ -35,23 +35,34 @@ export default class GeminiRepository {
   }
 
 
-  // Method to save the ChatGPT messages
-  save(data: Chunk) {
-    if (data.kind === 'message') {
-      this.db.exec(`INSERT INTO messages (id, role, content) VALUES (${data.id}, '${data.role}', '${data.content}')`);
-    }
-    if (data.kind === 'system_instruction') {
-      this.db.exec(`INSERT INTO system_instruction (id, content) VALUES (${data.id}, '${data.content}')`);
-    }
-    if (data.kind === 'model_to_use') {
-      this.db.exec(`INSERT INTO model_to_use (id, content) VALUES (${data.id}, '${data.content}')`);
-    }
-    if (data.kind === 'temperature') {
-      this.db.exec(`INSERT INTO temperature (id, content) VALUES (${data.id}, '${data.content}')`);
-    }
-    if (data.kind === 'top_p') {
-      this.db.exec(`INSERT INTO top_p (id, content) VALUES (${data.id}, '${data.content}')`);
-    }
+  // Method to save the Gemini messages
+  save(data: Chunk): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      let sql = '';
+      if (data.kind === 'message') {
+        sql = `INSERT INTO messages (id, role, content) VALUES (${data.id}, '${data.role}', '${data.content}')`;
+      } else if (data.kind === 'system_instruction') {
+        sql = `INSERT INTO system_instruction (id, content) VALUES (${data.id}, '${data.content}')`;
+      } else if (data.kind === 'model_to_use') {
+        sql = `INSERT INTO model_to_use (id, content) VALUES (${data.id}, '${data.content}')`;
+      } else if (data.kind === 'temperature') {
+        sql = `INSERT INTO temperature (id, content) VALUES (${data.id}, '${data.content}')`;
+      } else if (data.kind === 'top_p') {
+        sql = `INSERT INTO top_p (id, content) VALUES (${data.id}, '${data.content}')`;
+      }
+
+      if (sql) {
+        this.db.exec(sql, (err: Error | null) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      } else {
+        resolve(); // Resolve if no matching kind
+      }
+    });
   }
 
   getTemperature(){
