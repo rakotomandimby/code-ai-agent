@@ -1,8 +1,10 @@
 #!/bin/bash
 
+# Adapt those paths to your own
 export PATH="/home/rsync/node/bin:${PATH}"
-WORKDIR=/home/rsync/code-ai-agent-monorepo/code-ai-agent
-source /home/mihamina/.aikeys
+export WORKDIR=/home/rsync/code-ai-agent-monorepo/code-ai-agent
+
+source /home/mihamina/.aikeys # My OPENAI_API_KEY and GEMINI_API_KEY are stored here
 
 cd ${WORKDIR}
 npm install -f
