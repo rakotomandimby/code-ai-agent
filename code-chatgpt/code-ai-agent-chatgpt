@@ -1,8 +1,0 @@
-#!/bin/bash
-. /home/mihamina/.aikeys
-PATH="/home/rsync/node/bin:/home/rsync/code-ai-agent/code-chatgpt/node_modules/.bin:"${PATH}
-cd /home/rsync/code-ai-agent/code-chatgpt
-npm install
-npm run build
-npm run start
-
