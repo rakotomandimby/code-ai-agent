@@ -7,5 +7,5 @@ source /home/mihamina/.aikeys
 cd ${WORKDIR}
 npm install -f
 npx nx reset
-npx nx run-many --target=build --projects=lib,chatgpt-agent,gemini-agent --nx-cloud=false # Disable Nx Cloud
-npx nx run-many --target=serve --projects=chatgpt-agent,gemini-agent --nx-cloud=false # Disable Nx Cloud
+npx nx run-many --target=build --projects=lib,chatgpt-agent,gemini-agent
+npx nx run-many --target=serve --projects=chatgpt-agent,gemini-agent
