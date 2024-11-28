@@ -17,7 +17,7 @@ Requirements:
 - Have Node.js installed on your machine.
 - Have the API keys in `GEMINI_API_KEY` and `OPENAI_API_KEY` environment variables. 
 
-Check `./code-ai-agent/code-ai-agent-monorepo` for exemple for a launch script.
+Check [./code-ai-agent/code-ai-agent-monorepo](./code-ai-agent/code-ai-agent-monorepo) for exemple for a launch script.
 
 But manually, you can do the following:
 
