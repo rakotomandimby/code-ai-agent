@@ -1,0 +1,11 @@
+#!/bin/bash
+
+export PATH="/home/rsync/node/bin:${PATH}"
+WORKDIR=/home/rsync/code-ai-agent-monorepo/code-ai-agent
+source /home/mihamina/.aikeys
+
+cd ${WORKDIR}
+npm install -f
+npx nx reset
+npx nx run-many --target=build --projects=lib,chatgpt-agent,gemini-agent --nx-cloud=false # Disable Nx Cloud
+npx nx run-many --target=serve --projects=chatgpt-agent,gemini-agent --nx-cloud=false # Disable Nx Cloud

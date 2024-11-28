@@ -1,0 +1,13 @@
++code-ai-agent-monorepo
++*.json
++*.ts
++**/*.json
++**/*.ts
+-**/node_modules/**/*
+-node_modules/**/*
+-chatgpt-agent-e2e/**/*
+-gemini-agent-e2e/**/*
+-dist/**/*
+-package-lock.json
+-**/package-lock.json
+-tmp/**/*

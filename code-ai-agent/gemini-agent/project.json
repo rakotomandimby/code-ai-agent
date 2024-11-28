@@ -1,0 +1,60 @@
+{
+  "name": "gemini-agent",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "gemini-agent/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/gemini-agent",
+        "format": ["cjs"],
+        "bundle": false,
+        "main": "gemini-agent/src/main.ts",
+        "tsConfig": "gemini-agent/tsconfig.app.json",
+        "assets": ["gemini-agent/src/assets"],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "gemini-agent:build",
+        "runBuildTargetDependencies": false,
+        "port": 5000,
+        "inspect": false,
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "gemini-agent:build:development",
+        },
+        "production": {
+          "buildTarget": "gemini-agent:build:production"
+        }
+      }
+    }
+  }
+}

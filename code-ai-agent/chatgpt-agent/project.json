@@ -1,0 +1,60 @@
+{
+  "name": "chatgpt-agent",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "chatgpt-agent/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/chatgpt-agent",
+        "format": ["cjs"],
+        "bundle": false,
+        "main": "chatgpt-agent/src/main.ts",
+        "tsConfig": "chatgpt-agent/tsconfig.app.json",
+        "assets": ["chatgpt-agent/src/assets"],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "chatgpt-agent:build",
+        "runBuildTargetDependencies": false,
+        "port": 4000,
+        "inspect": false,
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "chatgpt-agent:build:development",
+        },
+        "production": {
+          "buildTarget": "chatgpt-agent:build:production"
+        }
+      }
+    }
+  }
+}
