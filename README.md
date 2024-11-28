@@ -38,6 +38,7 @@ npx nx serve chatgpt-agent
 npx nx serve gemini-agent
 ```
 
+Or, leverage Nx parallelism to build and serve all projects:
 
 ```bash
 npx nx reset
