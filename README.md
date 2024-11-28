@@ -15,9 +15,11 @@ The Gemini agent, found in the [./gemini-agent/](./code-ai-agent/gemini-agent/) 
 
 Requirements:
 - Have Node.js installed on your machine.
-- Have the API keys in `GEMINI_API_KEY` and `OPENAI_API_KEY` environment variables.
+- Have the API keys in `GEMINI_API_KEY` and `OPENAI_API_KEY` environment variables. 
 
-Then:
+Check `./code-ai-agent/code-ai-agent-monorepo` for exemple for a launch script.
+
+But manually, you can do the following:
 
 ```bash
 cd code-ai-agent/
