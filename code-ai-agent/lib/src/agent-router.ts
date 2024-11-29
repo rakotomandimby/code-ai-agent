@@ -27,8 +27,8 @@ export function createAgentRouter(
 
     const handleProperty = async (propertyName: string) => {
       counter++;
-      console.log('Got %s: %s', agentName, JSONBody[propertyName]);
       if (JSONBody[propertyName]) {
+        console.log('Got %s: %s', agentName, propertyName);
         let chunk = new Chunk(propertyName, counter, '', JSONBody[propertyName]);
         await repository.save(chunk);
       }
