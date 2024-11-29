@@ -2,7 +2,6 @@ import express from 'express';
 import { Request, Response, Router } from 'express';
 import { Chunk, BaseRepository } from '@code-ai-agent/lib'; // Import from lib index
 import { AIHttpClient } from './ai-http-client'; // Adjust import as necessary
-import { MultiTurnChat } from './multi-turn-chat'; // Adjust import as necessary
 
 export function createAgentRouter(
   repository: BaseRepository,
@@ -27,8 +26,9 @@ export function createAgentRouter(
     let JSONBody = req.body;
 
     const handleProperty = async (propertyName: string) => {
+      counter++;
+      console.log('Got %s: %s', agentName, JSONBody[propertyName]);
       if (JSONBody[propertyName]) {
-        counter++;
         let chunk = new Chunk(propertyName, counter, '', JSONBody[propertyName]);
         await repository.save(chunk);
       }
@@ -70,12 +70,16 @@ export function createAgentRouter(
           aiHttpClient.setBody(agentBody.getBody());
           const response = await aiHttpClient.post();
           res.send(response);
+
+          await repository.clear();
         } catch (err) {
           res.status(500).send(err);
+          await repository.clear();
         }
       }, 1000);
     } else {
       res.send({});
+      await repository.clear();
     }
   });
 
