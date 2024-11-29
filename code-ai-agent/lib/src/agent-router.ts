@@ -43,6 +43,7 @@ export function createAgentRouter(
 
     if (JSONBody.role && JSONBody.content) {
       counter++;
+      console.log('Got %s: %s message', agentName, role);
       let chunk = new Chunk('message', counter, JSONBody.role, JSONBody.content);
       await repository.save(chunk);
     }
