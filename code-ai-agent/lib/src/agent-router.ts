@@ -79,7 +79,6 @@ export function createAgentRouter(
       }, 1000);
     } else {
       res.send({});
-      await repository.clear();
     }
   });
 
