@@ -73,6 +73,7 @@ export class BaseRepository {
         } else {
           try {
             resolve(rows[0].content);
+            console.log(`${this.dbName}, etrieved ${setting}:`, rows[0].content);
           } catch (error) {
             console.error(`Error parsing ${setting}:`, error);
             resolve(''); // Or handle the error as needed
