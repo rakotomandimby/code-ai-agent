@@ -1,6 +1,8 @@
 # CodeAiAgent Project Description
 
-| :warning: | This software has been designe to be an agent of [code-ai.nvim](https://github.com/rakotomandimby/code-ai.nvim) | :wrning: |
+|           |                               :warning:                                                                         |           |
+| :---: | :---: | :---: |
+| :warning: | This software has been designe to be an agent of [code-ai.nvim](https://github.com/rakotomandimby/code-ai.nvim) | :warning: |
 
 
 
