@@ -1,5 +1,9 @@
 # CodeAiAgent Project Description
 
+| :warning: | This software has been designe to be an agent of [code-ai.nvim](https://github.com/rakotomandimby/code-ai.nvim) | :wrning: |
+
+
+
 This project is a monorepo built using NX, designed to facilitate interaction with various AI models, including ChatGPT and Gemini. The architecture is modular, allowing for easy scalability and maintainability, with shared libraries and utilities that streamline the development process. The project leverages TypeScript for type safety and clarity, and it incorporates various tools such as Jest for testing, ESLint for code quality, and SQLite for data storage, ensuring a robust and efficient development environment.
 
 ## ChatGPT Agent
