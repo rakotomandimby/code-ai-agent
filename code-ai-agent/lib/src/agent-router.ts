@@ -52,14 +52,15 @@ export function createAgentRouter(
       setTimeout(async () => {
         try {
           const agentBody = new agentBodyConstructor();
+
+          const modelToUse = await repository.getModelToUse();
+          agentBody.setModelToUse(modelToUse);
+
           const multiTurnText = await repository.getMultiTurnChat();
           agentBody.setMultiTurnChat(multiTurnText);
 
           const systemInstruction = await repository.getSystemInstruction();
           agentBody.setSystemInstruction(systemInstruction);
-
-          const modelToUse = await repository.getModelToUse();
-          agentBody.setModelToUse(modelToUse);
 
           const temperature = await repository.getTemperature();
           agentBody.setTemperature(parseFloat(temperature));

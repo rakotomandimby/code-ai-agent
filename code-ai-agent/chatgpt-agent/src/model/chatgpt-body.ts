@@ -6,12 +6,14 @@ export default class ChatGPTBody {
   private model: string;
   private temperature: number;
   private topP: number;
+  private systemInstruction: string;
 
   constructor() {
     this.chunks= [];
     this.model = '';
     this.temperature = 0.2;
     this.topP = 0.1;
+    this.systemInstruction = '';
   }
 
   public setMultiTurnChat(multiTurnChat: MultiTurnChat) {
@@ -22,12 +24,18 @@ export default class ChatGPTBody {
       let role = r.role;
       let content = r.content;
       if (r.role === 'model') {role='assistant';}
+      if(this.model.startsWith('o1')) {
+        if (i === rows.length - 1) {content = '# Instructions:\n' + this.systemInstruction + '\n' + content;}
+      }
       this.chunks.push({role: role, content: content});
     }
   }
 
   public setSystemInstruction(systemInstruction: string) {
-    this.chunks.unshift({role: 'system', content: systemInstruction});
+    this.systemInstruction = systemInstruction;
+    if (!this.model.startsWith('o1')){
+      this.chunks.unshift({role: 'system', content: systemInstruction});
+    }
   }
 
   public setModelToUse(modelToUse: string) {
@@ -43,11 +51,18 @@ export default class ChatGPTBody {
   }
 
   public getBody() {
-    return {
-      messages : this.chunks,
-      model : this.model,
-      temperature : this.temperature,
-      top_p : this.topP,
+    if(this.model.startsWith('o1')) {
+      return {
+        messages : this.chunks,
+        model : this.model,
+      }
+    } else{
+      return {
+        messages : this.chunks,
+        model : this.model,
+        temperature : this.temperature,
+        top_p : this.topP,
+      }
     }
   }
 
