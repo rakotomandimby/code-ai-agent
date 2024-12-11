@@ -28,7 +28,6 @@ export function createAgentRouter(
     const handleProperty = async (propertyName: string) => {
       counter++;
       if (JSONBody[propertyName]) {
-        console.log('Got %s: %s', agentName, propertyName);
         let chunk = new Chunk(propertyName, counter, '', JSONBody[propertyName]);
         await repository.save(chunk);
       }
@@ -43,7 +42,6 @@ export function createAgentRouter(
 
     if (JSONBody.role && JSONBody.content) {
       counter++;
-      console.log('Got %s: %s message', agentName, JSONBody.role);
       let chunk = new Chunk('message', counter, JSONBody.role, JSONBody.content);
       await repository.save(chunk);
     }
