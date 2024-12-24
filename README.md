@@ -53,7 +53,9 @@ npx nx reset
 npx nx run-many --target=build --projects=chatgpt-agent,gemini-agent,lib
 npx nx run-many --target=serve --projects=chatgpt-agent,gemini-agent
 ```
-## How did I create the workspaces:
+# How did I create the workspaces
+
+(This sections is for archives only)
 
 ```bash
 npx create-nx-workspace@latest code-ai-agent --preset=apps
