@@ -35,11 +35,11 @@ npm install @nx/node --save-dev
 
 
 ```bash
-npx nx reset
-npx nx build lib
-nox nx build anthropic-agent
-npx nx build gemini-agent
-npx nx build chatgpt-agent
+npx nx reset \
+&& npx nx build lib \
+&& npx nx build anthropic-agent \
+&& npx nx build gemini-agent \
+&& npx nx build chatgpt-agent
 ```
 
 ```bash

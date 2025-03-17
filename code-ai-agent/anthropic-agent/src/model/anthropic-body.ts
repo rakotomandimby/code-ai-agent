@@ -39,17 +39,11 @@ export default class AnthropicBody {
   }
 
   public getBody() {
-    if( this.model.startsWith('o1') || this.model.startsWith('o3') ) {
-      return {
-        messages : this.chunks,
-        model : this.model,
-      }
-    } else{
-      return {
-        messages : this.chunks,
-        system: this.systemInstruction,
-        model : this.model,
-      }
+    return {
+      max_tokens: 8192,
+      messages : this.chunks,
+      system: this.systemInstruction,
+      model : this.model,
     }
   }
 

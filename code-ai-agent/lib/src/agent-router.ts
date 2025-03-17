@@ -68,6 +68,7 @@ export function createAgentRouter(
           console.log(`>>>>> ${agentName} ${modelToUse} has been queried`);
           const aiHttpClient = new aiHttpClientConstructor();
           aiHttpClient.setBody(agentBody.getBody());
+          aiHttpClient.setModel(modelToUse); // Pass the model here
           const response = await aiHttpClient.post();
           res.send(response);
           console.log(`<<<<< ${agentName} ${modelToUse} has responded`);

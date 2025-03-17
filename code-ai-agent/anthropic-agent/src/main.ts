@@ -7,7 +7,7 @@ dotenv.config();
 
 // Create a new express application instance
 const app: express.Application = express();
-const port: string | number = process.env.PORT || 4000;
+const port: string | number = process.env.PORT || 6000;
 
 // Middleware to parse JSON bodies
 app.use(express.json());

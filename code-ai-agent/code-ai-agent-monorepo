@@ -9,5 +9,5 @@ source /home/mihamina/.aikeys # My OPENAI_API_KEY and GEMINI_API_KEY are stored 
 cd ${WORKDIR}
 npm install -f
 npx nx reset
-npx nx run-many --target=build --projects=lib,chatgpt-agent,gemini-agent
-npx nx run-many --target=serve --projects=chatgpt-agent,gemini-agent
+npx nx run-many --target=build --projects=lib,anthropic-agent,chatgpt-agent,gemini-agent
+npx nx run-many --target=serve --projects=anthropic-agent,chatgpt-agent,gemini-agent

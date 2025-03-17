@@ -4,6 +4,7 @@ export class AIHttpClient {
   protected provider: string;
   protected url: string;
   protected body: object;
+  protected model: string | undefined;
   protected token: string;
   protected tokenHeaderName: string;
   protected tokenHeaderValue: string;
@@ -19,10 +20,14 @@ export class AIHttpClient {
     this.tokenHeaderValue = '';
     this.apiVersionHeaderName = '';
     this.apiVersionHeaderValue = '';
+    this.model = undefined;
   }
 
   setBody(body: object) {
     this.body = body;
+  }
+  setModel(model: string) {
+    this.model = model;
   }
 
   async post(): Promise<Object> {
@@ -32,6 +37,10 @@ export class AIHttpClient {
       if (this.provider === 'anthropic') {
         axios.defaults.headers.common[this.apiVersionHeaderName] = this.apiVersionHeaderValue;
       }
+      if (this.provider === 'gemini' && this.model) {
+        this.url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
+      }
+
       const response = await axios.post(this.url, this.body);
       return response.data;
     } catch (error) {
@@ -59,7 +68,6 @@ export class AIHttpClient {
       this.tokenHeaderName = 'Authorization';
       this.tokenHeaderValue = `Bearer ${this.token}`;
     } else if (this.provider === 'gemini') {
-      this.url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent';
       this.token = process.env.GEMINI_API_KEY ?? '';
       this.tokenHeaderName = 'x-goog-api-key';
       this.tokenHeaderValue = this.token;
