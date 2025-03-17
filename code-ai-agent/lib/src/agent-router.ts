@@ -65,12 +65,12 @@ export function createAgentRouter(
 
           const topP = await repository.getTopP();
           agentBody.setTopP(parseFloat(topP));
-          console.log(`>>>>> ${agentName} has been queried`);
+          console.log(`>>>>> ${agentName} ${modelToUse} has been queried`);
           const aiHttpClient = new aiHttpClientConstructor();
           aiHttpClient.setBody(agentBody.getBody());
           const response = await aiHttpClient.post();
           res.send(response);
-          console.log(`<<<<< ${agentName} has responded`);
+          console.log(`<<<<< ${agentName} ${modelToUse} has responded`);
           await repository.clear();
         } catch (err) {
           res.status(500).send(err);

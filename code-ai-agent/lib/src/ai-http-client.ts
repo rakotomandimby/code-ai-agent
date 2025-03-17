@@ -7,6 +7,8 @@ export class AIHttpClient {
   protected token: string;
   protected tokenHeaderName: string;
   protected tokenHeaderValue: string;
+  protected apiVersionHeaderName: string;
+  protected apiVersionHeaderValue: string;
 
   constructor(provider: string) {
     this.provider = provider;
@@ -15,6 +17,8 @@ export class AIHttpClient {
     this.token = '';
     this.tokenHeaderName = '';
     this.tokenHeaderValue = '';
+    this.apiVersionHeaderName = '';
+    this.apiVersionHeaderValue = '';
   }
 
   setBody(body: object) {
@@ -24,6 +28,10 @@ export class AIHttpClient {
   async post(): Promise<Object> {
     try {
       axios.defaults.headers.common[this.tokenHeaderName] = this.tokenHeaderValue;
+      // if this.provider is 'anthropic', set the api version headers
+      if (this.provider === 'anthropic') {
+        axios.defaults.headers.common[this.apiVersionHeaderName] = this.apiVersionHeaderValue;
+      }
       const response = await axios.post(this.url, this.body);
       return response.data;
     } catch (error) {
@@ -55,6 +63,13 @@ export class AIHttpClient {
       this.token = process.env.GEMINI_API_KEY ?? '';
       this.tokenHeaderName = 'x-goog-api-key';
       this.tokenHeaderValue = this.token;
+    } else if (this.provider === 'anthropic') {
+      this.url = 'https://api.anthropic.com/v1/messages';
+      this.token = process.env.ANTHROPIC_API_KEY ?? '';
+      this.tokenHeaderName = 'x-api-key';
+      this.tokenHeaderValue = this.token;
+      this.apiVersionHeaderName = 'anthropic-version';
+      this.apiVersionHeaderValue = '2023-06-01';
     }
   }
 }

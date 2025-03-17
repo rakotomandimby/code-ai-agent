@@ -37,11 +37,13 @@ npm install @nx/node --save-dev
 ```bash
 npx nx reset
 npx nx build lib
+nox nx build anthropic-agent
 npx nx build gemini-agent
 npx nx build chatgpt-agent
 ```
 
 ```bash
+npx nx serve anthropic-agent
 npx nx serve chatgpt-agent
 npx nx serve gemini-agent
 ```
@@ -50,8 +52,8 @@ Or, leverage Nx parallelism to build and serve all projects:
 
 ```bash
 npx nx reset
-npx nx run-many --target=build --projects=chatgpt-agent,gemini-agent,lib
-npx nx run-many --target=serve --projects=chatgpt-agent,gemini-agent
+npx nx run-many --target=build --projects=anthropic-agent,chatgpt-agent,gemini-agent,lib
+npx nx run-many --target=serve --projects=anthropic-agent,chatgpt-agent,gemini-agent
 ```
 # How did I create the workspaces
 
