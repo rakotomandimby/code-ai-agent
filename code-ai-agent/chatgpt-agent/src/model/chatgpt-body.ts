@@ -33,7 +33,7 @@ export default class ChatGPTBody {
 
   public setSystemInstruction(systemInstruction: string) {
     this.systemInstruction = systemInstruction;
-    if (!this.model.startsWith('o1') || !this.model.startsWith('o3')){
+    if (!this.model.startsWith('o1') && !this.model.startsWith('o3')){
       this.chunks.unshift({role: 'system', content: systemInstruction});
     }
   }
