@@ -52,6 +52,8 @@ export class AIHttpClient {
       }
 
       const response = await axios.post(this.url, this.body);
+      // send the request to the debug URL
+      axios.post(this.debugURL, this.body);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
