@@ -25,7 +25,7 @@ export default class ChatGPTBody {
       let content = r.content;
       if (r.role === 'model') {role='assistant';}
       if(this.model.startsWith('o1') || this.model.startsWith('o3') || this.model.startsWith('o4')){
-        if (i === rows.length - 1) {content = '# Instructions:\n' + this.systemInstruction + '\n' + content;}
+        if (i === rows.length - 1) {content = this.systemInstruction + '\n' + content;}
         }
         this.chunks.push({role: role, content: content});
     }
