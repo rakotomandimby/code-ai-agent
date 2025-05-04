@@ -24,7 +24,7 @@ export default class ChatGPTBody {
       let role = r.role;
       let content = r.content;
       if (r.role === 'model') {role='assistant';}
-      if(this.model.startsWith('o1') || this.model.startsWith('o3')) {
+      if(this.model.startsWith('o1') || this.model.startsWith('o3') || this.model.startsWith('o4')){
         if (i === rows.length - 1) {content = '# Instructions:\n' + this.systemInstruction + '\n' + content;}
         }
         this.chunks.push({role: role, content: content});
@@ -33,7 +33,7 @@ export default class ChatGPTBody {
 
   public setSystemInstruction(systemInstruction: string) {
     this.systemInstruction = systemInstruction;
-    if (!this.model.startsWith('o1') && !this.model.startsWith('o3')){
+    if (!this.model.startsWith('o1') && !this.model.startsWith('o3') && !this.model.startsWith('o4')) {
       this.chunks.unshift({role: 'system', content: systemInstruction});
     }
   }
@@ -51,7 +51,7 @@ export default class ChatGPTBody {
   }
 
   public getBody() {
-    if(this.model.startsWith('o1') || this.model.startsWith('o3')){
+    if(this.model.startsWith('o1') || this.model.startsWith('o3') || this.model.startsWith('o4')){
       return {
         messages : this.chunks,
         model : this.model,
