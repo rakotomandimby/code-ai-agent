@@ -4,3 +4,9 @@ The current code logs that the model has been queried, then that the model has r
 I want that metric to be logged as well.
 
 Tell me the modifications I need to make to the code to log the time it took to get the response from the model.
+
+
+
+# This is disabled answer (0k in, 0k out)
+
+Gemini models are disabled
