@@ -52,10 +52,7 @@ export class AIHttpClient {
       }
 
       const response = await axios.post(this.url, this.body);
-      // if the provider is "chatgpt", we need to use the debug url
-      if (this.provider === 'chatgpt') {
-        axios.post(this.debugURL, this.body);
-      }
+      // axios.post(this.debugURL, this.body);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {

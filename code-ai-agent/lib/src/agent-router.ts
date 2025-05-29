@@ -78,15 +78,16 @@ export function createAgentRouter(
           const response = await aiHttpClient.post();
 
           // --- End timing here ---
-          const endTime = Date.now(); // <-- Added: record end time
-          const durationMs = endTime - startTime; // <-- Added: calculate duration
-
+          const endTime = Date.now();
+          const durationMs = endTime - startTime;
+          // convert to seconds
+          const durationSec = (durationMs / 1000).toFixed(2);
           res.send(response);
 
           if (modelToUse === 'disabled') {
-            console.log(`<<<<< ${agentName} ${modelToUse} - Response for disabled model sent (took ${durationMs} ms)`);
+            console.log(`<<<<< ${agentName} ${modelToUse} - Response for disabled model sent (took ${durationSec} s)`);
           } else {
-            console.log(`<<<<< ${agentName} ${modelToUse} has responded (took ${durationMs} ms)`); // <-- Added: log duration
+            console.log(`<<<<< ${agentName} ${modelToUse} has responded (took ${durationSec} s)`);
           }
 
           await repository.clear();
