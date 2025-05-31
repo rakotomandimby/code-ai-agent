@@ -1,4 +1,4 @@
-export default function getChatGPTErrorResponse(errorMessage: string): object {
+export default function getOpenAIErrorResponse(errorMessage: string): object {
   return {
     id: "error-response",
     object: "chat.completion",
@@ -9,7 +9,7 @@ export default function getChatGPTErrorResponse(errorMessage: string): object {
         index: 0,
         message: {
           role: "assistant",
-          content: `ChatGPT API Error: ${errorMessage}`
+          content: `OpenAI API Error: ${errorMessage}`
         },
         logprobs: null,
         finish_reason: "error"

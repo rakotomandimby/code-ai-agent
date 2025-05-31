@@ -1,6 +1,6 @@
 import { MultiTurnChat } from '@code-ai-agent/lib';
 
-export default class ChatGPTBody {
+export default class OpenAIBody{
   private multiTurnChat: MultiTurnChat = new MultiTurnChat();
   private chunks: any;
   private model: string;

@@ -1,4 +1,4 @@
-export default function getGeminiErrorResponse(errorMessage: string): object {
+export default function getGoogleAIErrorResponse(errorMessage: string): object {
   return {
     candidates: [
       {
@@ -6,7 +6,7 @@ export default function getGeminiErrorResponse(errorMessage: string): object {
           parts: [
             {
               // Embed the actual error message here
-              text: `Gemini API Error: ${errorMessage}`,
+              text: `GoogleAI API Error: ${errorMessage}`,
             },
           ],
           role: 'model', // Keep the role as 'model' for consistency

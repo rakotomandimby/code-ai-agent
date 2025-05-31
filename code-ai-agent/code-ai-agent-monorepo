@@ -4,10 +4,10 @@
 export PATH="/home/rsync/node/bin:${PATH}"
 export WORKDIR=/home/rsync/code-ai-agent-monorepo/code-ai-agent
 
-source /home/mihamina/.aikeys # My OPENAI_API_KEY and GEMINI_API_KEY are stored here
+source /home/mihamina/.aikeys # My OPENAI_API_KEY and GOOGLEAI_API_KEY are stored here
 
 cd ${WORKDIR}
 npm install -f
 npx nx reset
-npx nx run-many --target=build --projects=lib,anthropic-agent,chatgpt-agent,gemini-agent
-npx nx run-many --target=serve --projects=anthropic-agent,chatgpt-agent,gemini-agent
+npx nx run-many --target=build --projects=lib,anthropic-agent,openai-agent,googleai-agent
+npx nx run-many --target=serve --projects=anthropic-agent,openai-agent,googleai-agent

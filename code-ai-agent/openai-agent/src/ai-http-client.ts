@@ -1,8 +1,8 @@
 import { AIHttpClient } from '@code-ai-agent/lib';
 
-export class GeminiAIHttpClient extends AIHttpClient {
+export class OpenAIAIHttpClient extends AIHttpClient {
     constructor() {
-        super('gemini');
+        super('openai');
         this.initClient();
     }
 }

@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import getDisabledModelResponse from './get-disabled-model-response';
-import getGeminiErrorResponse from './get-gemini-error-response';
-import getChatGPTErrorResponse from './get-chatgpt-error-response';
+import getGoogleAIErrorResponse from './get-googleai-error-response';
+import getOpenAIErrorResponse from './get-openai-error-response';
 import getAnthropicErrorResponse from './get-anthropic-error-response'; // Add this line
 
 export class AIHttpClient {
@@ -46,7 +46,7 @@ export class AIHttpClient {
       if (this.provider === 'anthropic') {
         axios.defaults.headers.common[this.apiVersionHeaderName] = this.apiVersionHeaderValue;
       }
-      if (this.provider === 'gemini' && this.model) {
+      if (this.provider === 'googleai' && this.model) {
         this.url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
         this.debugURL = `https://eo95iwu8zyev9gb.m.pipedream.net/v1beta/models/${this.model}:generateContent`;
       }
@@ -58,9 +58,9 @@ export class AIHttpClient {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<any>; // Use generic type for data initially
 
-        // Handle ChatGPT specific errors
+        // Handle OpenAI specific errors
         if (
-          this.provider === 'chatgpt' &&
+          this.provider === 'openai' &&
           axiosError.response &&
           axiosError.response.data &&
           axiosError.response.data.error &&
@@ -68,11 +68,11 @@ export class AIHttpClient {
         ) {
           const errorMessage = axiosError.response.data.error.message;
           console.error(`<<<<< ${this.provider} API Error: ${axiosError.response.status} - ${errorMessage}`);
-          return getChatGPTErrorResponse(errorMessage);
+          return getOpenAIErrorResponse(errorMessage);
         }
-        // Handle Gemini specific errors
+        // Handle GoogleAI specific errors
         else if (
-          this.provider === 'gemini' &&
+          this.provider === 'googleai' &&
           axiosError.response &&
           axiosError.response.data &&
           axiosError.response.data.error &&
@@ -80,7 +80,7 @@ export class AIHttpClient {
         ) {
           const errorMessage = axiosError.response.data.error.message;
           console.error(`<<<<< ${this.provider} API Error: ${axiosError.response.status} - ${errorMessage}`);
-          return getGeminiErrorResponse(errorMessage);
+          return getGoogleAIErrorResponse(errorMessage);
         }
         // Handle Anthropic specific errors - add this block
         else if (
@@ -109,17 +109,17 @@ export class AIHttpClient {
   }
 
   protected initClient() {
-    if (this.provider === 'chatgpt') {
+    if (this.provider === 'openai') {
       this.url = 'https://api.openai.com/v1/chat/completions';
       this.debugURL = 'https://eo95iwu8zyev9gb.m.pipedream.net/v1/chat/completions';
       this.token = process.env.OPENAI_API_KEY ?? '';
       this.tokenHeaderName = 'Authorization';
       this.tokenHeaderValue = `Bearer ${this.token}`;
-    } else if (this.provider === 'gemini') {
-      this.token = process.env.GEMINI_API_KEY ?? '';
+    } else if (this.provider === 'googleai') {
+      this.token = process.env.GOOGLEAI_API_KEY ?? '';
       this.tokenHeaderName = 'x-goog-api-key';
       this.tokenHeaderValue = this.token;
-      // The specific model URL is set in the post method for Gemini
+      // The specific model URL is set in the post method for GoogleAI
     } else if (this.provider === 'anthropic') {
       this.url = 'https://api.anthropic.com/v1/messages';
       this.debugURL = 'https://eo95iwu8zyev9gb.m.pipedream.net/v1/messages';

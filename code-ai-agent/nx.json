@@ -37,9 +37,6 @@
         "targetName": "test"
       },
       "exclude": [
-        "gemini-agent-e2e/**/*",
-        "gemini-agent-e2e/**/*",
-        "chatgpt-agent-e2e/**/*"
       ]
     }
   ]

@@ -1,7 +1,7 @@
 {
-  "name": "gemini-agent",
+  "name": "openai-agent",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "gemini-agent/src",
+  "sourceRoot": "openai-agent/src",
   "projectType": "application",
   "tags": [],
   "targets": {
@@ -11,12 +11,12 @@
       "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "dist/gemini-agent",
+        "outputPath": "dist/openai-agent",
         "format": ["cjs"],
         "bundle": false,
-        "main": "gemini-agent/src/main.ts",
-        "tsConfig": "gemini-agent/tsconfig.app.json",
-        "assets": ["gemini-agent/src/assets"],
+        "main": "openai-agent/src/main.ts",
+        "tsConfig": "openai-agent/tsconfig.app.json",
+        "assets": ["openai-agent/src/assets"],
         "generatePackageJson": true,
         "esbuildOptions": {
           "sourcemap": true,
@@ -42,17 +42,17 @@
       "defaultConfiguration": "development",
       "dependsOn": ["build"],
       "options": {
-        "buildTarget": "gemini-agent:build",
+        "buildTarget": "openai-agent:build",
         "runBuildTargetDependencies": false,
-        "port": 5000,
+        "port": 4000,
         "inspect": false,
       },
       "configurations": {
         "development": {
-          "buildTarget": "gemini-agent:build:development",
+          "buildTarget": "openai-agent:build:development",
         },
         "production": {
-          "buildTarget": "gemini-agent:build:production"
+          "buildTarget": "openai-agent:build:production"
         }
       }
     }

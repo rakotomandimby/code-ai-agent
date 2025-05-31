@@ -1,8 +1,8 @@
 import { AIHttpClient } from '@code-ai-agent/lib';
 
-export class ChatGPTAIHttpClient extends AIHttpClient {
+export class GoogleAIAIHttpClient extends AIHttpClient {
     constructor() {
-        super('chatgpt');
+        super('googleai');
         this.initClient();
     }
 }

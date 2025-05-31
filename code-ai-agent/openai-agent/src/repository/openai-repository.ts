@@ -1,7 +1,7 @@
    import { BaseRepository } from '@code-ai-agent/lib';
 
-   export default class GeminiRepository extends BaseRepository {
+   export default class OpenAIRepository extends BaseRepository {
      constructor() {
-       super('gemini');
+       super('openai');
      }
    }

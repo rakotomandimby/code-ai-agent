@@ -1,7 +1,7 @@
 {
-  "name": "chatgpt-agent",
+  "name": "googleai-agent",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "chatgpt-agent/src",
+  "sourceRoot": "googleai-agent/src",
   "projectType": "application",
   "tags": [],
   "targets": {
@@ -11,12 +11,12 @@
       "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "dist/chatgpt-agent",
+        "outputPath": "dist/googleai-agent",
         "format": ["cjs"],
         "bundle": false,
-        "main": "chatgpt-agent/src/main.ts",
-        "tsConfig": "chatgpt-agent/tsconfig.app.json",
-        "assets": ["chatgpt-agent/src/assets"],
+        "main": "googleai-agent/src/main.ts",
+        "tsConfig": "googleai-agent/tsconfig.app.json",
+        "assets": ["googleai-agent/src/assets"],
         "generatePackageJson": true,
         "esbuildOptions": {
           "sourcemap": true,
@@ -42,17 +42,17 @@
       "defaultConfiguration": "development",
       "dependsOn": ["build"],
       "options": {
-        "buildTarget": "chatgpt-agent:build",
+        "buildTarget": "googleai-agent:build",
         "runBuildTargetDependencies": false,
-        "port": 4000,
+        "port": 5000,
         "inspect": false,
       },
       "configurations": {
         "development": {
-          "buildTarget": "chatgpt-agent:build:development",
+          "buildTarget": "googleai-agent:build:development",
         },
         "production": {
-          "buildTarget": "chatgpt-agent:build:production"
+          "buildTarget": "googleai-agent:build:production"
         }
       }
     }

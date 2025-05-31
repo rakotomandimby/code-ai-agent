@@ -1,5 +1,5 @@
   export default function getDisabledModelResponse(provider: string): Object {
-    if (provider === 'chatgpt') {
+    if (provider === 'openai') {
       return {
         id: "model-disabled",
         object: "chat.completion",
@@ -23,7 +23,7 @@
         },
         system_fingerprint: "disabled"
       };
-    } else if (provider === 'gemini') {
+    } else if (provider === 'googleai') {
       return {
         candidates: [
           {

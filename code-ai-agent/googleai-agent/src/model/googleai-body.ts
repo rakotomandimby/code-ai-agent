@@ -1,6 +1,6 @@
 import { MultiTurnChat } from '@code-ai-agent/lib';
 
-export default class GeminiBody {
+export default class GoogleAIBody {
   private multiTurnChat: MultiTurnChat = new MultiTurnChat();
   private chunks: any;
   private systemInstruction: string;
