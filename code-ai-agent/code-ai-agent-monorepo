@@ -4,7 +4,7 @@
 export PATH="/home/rsync/node/bin:${PATH}"
 export WORKDIR=/home/rsync/code-ai-agent-monorepo/code-ai-agent
 
-source /home/mihamina/.aikeys # My OPENAI_API_KEY and GOOGLEAI_API_KEY are stored here
+source /home/mihamina/.aikeys # My OPENAI_API_KEY, ANTHROPIC_API_KEY and GOOGLEAI_API_KEY are stored here
 
 cd ${WORKDIR}
 npm install -f

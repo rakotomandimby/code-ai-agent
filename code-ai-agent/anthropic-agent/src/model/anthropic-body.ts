@@ -40,7 +40,7 @@ export default class AnthropicBody {
 
   public getBody() {
     return {
-      max_tokens: 8192,
+      max_tokens: 32000,
       messages : this.chunks,
       system: this.systemInstruction,
       model : this.model,
