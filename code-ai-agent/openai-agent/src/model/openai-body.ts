@@ -26,8 +26,8 @@ export default class OpenAIBody{
       if (r.role === 'model') {role='assistant';}
       if(this.model.startsWith('o1') || this.model.startsWith('o3') || this.model.startsWith('o4')){
         if (i === rows.length - 1) {content = this.systemInstruction + '\n' + content;}
-        }
-        this.chunks.push({role: role, content: content});
+      }
+      this.chunks.push({role: role, content: content});
     }
   }
 
@@ -52,16 +52,13 @@ export default class OpenAIBody{
 
   public getBody() {
     if(this.model.startsWith('o1') || this.model.startsWith('o3') || this.model.startsWith('o4')){
-      return {
-        messages : this.chunks,
-        model : this.model,
-      }
+      return { messages : this.chunks, model : this.model, }
     } else{
-      return {
-        messages : this.chunks,
-        model : this.model,
-        temperature : this.temperature,
-        top_p : this.topP,
+      // if model is "gpt-5", do not set temperature and top_p
+      if (this.model === 'gpt-5') {
+        return { messages : this.chunks, model : this.model, }
+      } else {
+        return { messages : this.chunks, model : this.model, temperature : this.temperature, top_p : this.topP, }
       }
     }
   }
