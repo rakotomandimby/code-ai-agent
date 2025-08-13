@@ -54,8 +54,7 @@ export default class OpenAIBody{
     if(this.model.startsWith('o1') || this.model.startsWith('o3') || this.model.startsWith('o4')){
       return { messages : this.chunks, model : this.model, }
     } else{
-      // if model is "gpt-5", do not set temperature and top_p
-      if (this.model === 'gpt-5') {
+      if ((this.model === 'gpt-5') || (this.model === 'gpt-5-mini') || (this.model === 'gpt-5-nano')) {
         return { messages : this.chunks, model : this.model, }
       } else {
         return { messages : this.chunks, model : this.model, temperature : this.temperature, top_p : this.topP, }
