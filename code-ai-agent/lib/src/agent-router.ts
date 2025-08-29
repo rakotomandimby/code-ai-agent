@@ -11,6 +11,7 @@ export function createAgentRouter(
 ): Router {
   const router: Router = express.Router();
   let counter: number = 1000;
+  let apiKey: string | null = null; // Store API key in memory for the request cycle
 
   router.get('/', (req: Request, res: Response) => {
     res.send('Hello from shared router!');
@@ -18,17 +19,24 @@ export function createAgentRouter(
 
   router.get(`/${agentName}/clear`, async (req: Request, res: Response) => {
     await repository.clear();
+    apiKey = null; // Also clear the API key
     res.send({});
   });
 
   router.post(`/${agentName}`, async (req: Request, res: Response) => {
     await repository.init();
-    let JSONBody = req.body;
+    const JSONBody = req.body;
+
+    // Capture the API key if provided and remove it from the body
+    if (JSONBody.api_key) {
+      apiKey = JSONBody.api_key;
+      delete JSONBody.api_key;
+    }
 
     const handleProperty = async (propertyName: string) => {
       counter++;
       if (JSONBody[propertyName]) {
-        let chunk = new Chunk(propertyName, counter, '', JSONBody[propertyName]);
+        const chunk = new Chunk(propertyName, counter, '', JSONBody[propertyName]);
         await repository.save(chunk);
       }
     };
@@ -42,7 +50,7 @@ export function createAgentRouter(
 
     if (JSONBody.role && JSONBody.content) {
       counter++;
-      let chunk = new Chunk('message', counter, JSONBody.role, JSONBody.content);
+      const chunk = new Chunk('message', counter, JSONBody.role, JSONBody.content);
       await repository.save(chunk);
     }
 
@@ -69,18 +77,18 @@ export function createAgentRouter(
           console.log(`>>>>> ${agentName} ${modelToUse} has been queried`);
 
           // --- Start timing here ---
-          const startTime = Date.now(); // <-- Added: record start time
+          const startTime = Date.now();
 
           const aiHttpClient = new aiHttpClientConstructor();
+          aiHttpClient.setApiKey(apiKey); // Pass the stored API key
           aiHttpClient.setBody(agentBody.getBody());
-          aiHttpClient.setModel(modelToUse); // Pass the model here
+          aiHttpClient.setModel(modelToUse);
 
           const response = await aiHttpClient.post();
 
           // --- End timing here ---
           const endTime = Date.now();
           const durationMs = endTime - startTime;
-          // convert to seconds
           const durationSec = (durationMs / 1000).toFixed(2);
           res.send(response);
 
@@ -90,8 +98,10 @@ export function createAgentRouter(
             console.log(`<<<<< ${agentName} ${modelToUse} has responded (took ${durationSec} s)`);
           }
 
+          apiKey = null; // Clear API key after use
           await repository.clear();
         } catch (err) {
+          apiKey = null; // Clear API key on error
           res.status(500).send(err);
           await repository.clear();
         }

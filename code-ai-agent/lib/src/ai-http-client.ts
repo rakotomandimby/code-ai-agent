@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import getDisabledModelResponse from './get-disabled-model-response';
 import getGoogleAIErrorResponse from './get-googleai-error-response';
 import getOpenAIErrorResponse from './get-openai-error-response';
-import getAnthropicErrorResponse from './get-anthropic-error-response'; // Add this line
+import getAnthropicErrorResponse from './get-anthropic-error-response';
 
 export class AIHttpClient {
   protected provider: string;
@@ -15,6 +15,7 @@ export class AIHttpClient {
   protected tokenHeaderValue: string;
   protected apiVersionHeaderName: string;
   protected apiVersionHeaderValue: string;
+  protected apiKey: string | null = null;
 
   constructor(provider: string) {
     this.provider = provider;
@@ -29,6 +30,10 @@ export class AIHttpClient {
     this.debugURL = '';
   }
 
+  setApiKey(key: string | null) {
+    this.apiKey = key;
+  }
+
   setBody(body: object) {
     this.body = body;
   }
@@ -40,6 +45,17 @@ export class AIHttpClient {
     if (this.model === 'disabled') {
       return getDisabledModelResponse(this.provider);
     }
+
+    if (!this.apiKey) {
+      const errorMessage = `API key is missing. Please provide it in the 'api_key' field of your request body.`;
+      console.error(`<<<<< ${this.provider} API Error: ${errorMessage}`);
+      if (this.provider === 'openai') return getOpenAIErrorResponse(errorMessage);
+      if (this.provider === 'googleai') return getGoogleAIErrorResponse(errorMessage);
+      if (this.provider === 'anthropic') return getAnthropicErrorResponse(errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    this.initClient();
 
     try {
       axios.defaults.headers.common[this.tokenHeaderName] = this.tokenHeaderValue;
@@ -56,39 +72,25 @@ export class AIHttpClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<any>; // Use generic type for data initially
+        const axiosError = error as AxiosError<any>;
 
-        // Handle OpenAI specific errors
         if (
           this.provider === 'openai' &&
-          axiosError.response &&
-          axiosError.response.data &&
-          axiosError.response.data.error &&
-          axiosError.response.data.error.message
+          axiosError.response?.data?.error?.message
         ) {
           const errorMessage = axiosError.response.data.error.message;
           console.error(`<<<<< ${this.provider} API Error: ${axiosError.response.status} - ${errorMessage}`);
           return getOpenAIErrorResponse(errorMessage);
-        }
-        // Handle GoogleAI specific errors
-        else if (
+        } else if (
           this.provider === 'googleai' &&
-          axiosError.response &&
-          axiosError.response.data &&
-          axiosError.response.data.error &&
-          axiosError.response.data.error.message
+          axiosError.response?.data?.error?.message
         ) {
           const errorMessage = axiosError.response.data.error.message;
           console.error(`<<<<< ${this.provider} API Error: ${axiosError.response.status} - ${errorMessage}`);
           return getGoogleAIErrorResponse(errorMessage);
-        }
-        // Handle Anthropic specific errors - add this block
-        else if (
+        } else if (
           this.provider === 'anthropic' &&
-          axiosError.response &&
-          axiosError.response.data &&
-          axiosError.response.data.error &&
-          axiosError.response.data.error.message
+          axiosError.response?.data?.error?.message
         ) {
           const errorMessage = axiosError.response.data.error.message;
           console.error(`<<<<< ${this.provider} API Error: ${axiosError.response.status} - ${errorMessage}`);
@@ -112,18 +114,17 @@ export class AIHttpClient {
     if (this.provider === 'openai') {
       this.url = 'https://api.openai.com/v1/chat/completions';
       this.debugURL = 'https://eo95iwu8zyev9gb.m.pipedream.net/v1/chat/completions';
-      this.token = process.env.OPENAI_API_KEY ?? '';
+      this.token = this.apiKey ?? '';
       this.tokenHeaderName = 'Authorization';
       this.tokenHeaderValue = `Bearer ${this.token}`;
     } else if (this.provider === 'googleai') {
-      this.token = process.env.GOOGLEAI_API_KEY ?? '';
+      this.token = this.apiKey ?? '';
       this.tokenHeaderName = 'x-goog-api-key';
       this.tokenHeaderValue = this.token;
-      // The specific model URL is set in the post method for GoogleAI
     } else if (this.provider === 'anthropic') {
       this.url = 'https://api.anthropic.com/v1/messages';
       this.debugURL = 'https://eo95iwu8zyev9gb.m.pipedream.net/v1/messages';
-      this.token = process.env.ANTHROPIC_API_KEY ?? '';
+      this.token = this.apiKey ?? '';
       this.tokenHeaderName = 'x-api-key';
       this.tokenHeaderValue = this.token;
       this.apiVersionHeaderName = 'anthropic-version';
