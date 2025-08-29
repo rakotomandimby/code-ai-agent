@@ -9,3 +9,10 @@ Currently, I provide the API keys for the LLMs via environment variables:
 But what is supposed to happen if these environment variables are not set?
 Does the application start, or does it throw an error and refuse to start?
 
+
+
+# GGL GoogleAI API Error: API key is missing. Please provide it in the 'api_key' field of your request body.
+
+GoogleAI gemini-2.5-flash-lite (0k in, 0k out)
+
+

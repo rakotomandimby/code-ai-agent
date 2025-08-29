@@ -28,9 +28,8 @@ export function createAgentRouter(
     const JSONBody = req.body;
 
     // Capture the API key if provided and remove it from the body
-    if (JSONBody.api_key) {
-      apiKey = JSONBody.api_key;
-      delete JSONBody.api_key;
+    if (JSONBody['api_key']) {
+      apiKey = JSONBody['api_key'];
     }
 
     const handleProperty = async (propertyName: string) => {
