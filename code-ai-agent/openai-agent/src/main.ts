@@ -3,7 +3,7 @@ import axios from 'axios';
 import * as db from './db';
 
 const host = process.env.HOST ?? 'localhost';
-const port = process.env.PORT ? Number(process.env.PORT) : 6000;
+const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 
 const app = express();
 app.use(express.json());
@@ -25,43 +25,52 @@ interface ConfigPayload {
 
 type RequestBody = FilePayload | ConfigPayload;
 
-// --- API Interaction ---
+// --- API Interaction (OpenAI Responses API) ---
 async function buildRequestBody(): Promise<any> {
-  const systemInstructions = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']))?.value || '';
-  const prompt = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']))?.value || '';
-  const dataEntries = await db.all<{ file_path: string, file_content: string }>('SELECT file_path, file_content FROM data ORDER BY id ASC');
+  const prompt =
+    (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']))?.value || '';
+  const dataEntries = await db.all<{ file_path: string; file_content: string }>(
+    'SELECT file_path, file_content FROM data ORDER BY id ASC'
+  );
 
-  const messages: Array<{ role: string, content: string }> = [];
+  // Build a single markdown document as input
+  const parts: string[] = [];
 
-  let contextMessage = 'I need your help on this project.';
-
-  for (const entry of dataEntries) {
-    contextMessage += `\n\nThe content of the ${entry.file_path} file is:\n${entry.file_content}`;
+  parts.push('# Project Files');
+  if (dataEntries.length === 0) {
+    parts.push('_No files provided._');
+  } else {
+    for (const entry of dataEntries) {
+      parts.push(
+        `## File: ${entry.file_path}\n\n` +
+          '```\n' +
+          `${entry.file_content}\n` +
+          '```'
+      );
+    }
   }
-
-  messages.push({ role: 'user', content: contextMessage });
 
   if (prompt) {
-    messages.push({ role: 'user', content: prompt });
+    parts.push(`\n\n${prompt.trim()}`);
   }
 
+  const input = parts.join('\n\n');
   return {
-    model: '', // Will be set in postToAnthropic
-    max_tokens: 4096,
-    system: systemInstructions || undefined,
-    messages
+    // Model will be set in postToOpenAI
+    input,
+    max_output_tokens: 1024*96
   };
 }
 
-function postToAnthropic(requestBody: any, apiKey: string, model: string): Promise<any> {
-  const url = 'https://api.anthropic.com/v1/messages';
+function postToOpenAI(requestBody: any, apiKey: string, model: string, instructions: string): Promise<any> {
+  const url = 'https://api.openai.com/v1/responses';
   requestBody.model = model;
+  requestBody.instructions = instructions;
 
   return axios.post(url, requestBody, {
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
+      Authorization: `Bearer ${apiKey}`
     }
   });
 }
@@ -110,6 +119,7 @@ const handlePrompt = async (req: Request, res: Response) => {
 
   const apiKey = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['api_key']))?.value;
   const model = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['model']))?.value;
+  const instructions = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']))?.value || '';
 
   if (!apiKey) return res.status(400).json({ error: 'API key not set' });
   if (!model) return res.status(400).json({ error: 'Model not set' });
@@ -117,7 +127,7 @@ const handlePrompt = async (req: Request, res: Response) => {
   // Wait 3 seconds to ensure DB updates are visible before building the request body
   await delay(3000);
   const requestBody = await buildRequestBody();
-  const apiResponse = await postToAnthropic(requestBody, apiKey, model);
+  const apiResponse = await postToOpenAI(requestBody, apiKey, model, instructions);
   res.json(apiResponse.data);
 };
 
@@ -149,8 +159,8 @@ app.post('/', async (req: Request, res: Response, next: NextFunction) => {
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('Error processing request:', err);
   if (axios.isAxiosError(err) && err.response) {
-    console.error('Error calling Anthropic API:', err.response.data);
-    return res.status(500).json({ error: 'Failed to process prompt with Anthropic API', details: err.response.data });
+    console.error('Error calling OpenAI API:', err.response.data);
+    return res.status(500).json({ error: 'Failed to process prompt with OpenAI API', details: err.response.data });
   }
   res.status(500).json({ error: 'Internal server error' });
 });

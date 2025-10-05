@@ -8,6 +8,9 @@ const port = process.env.PORT ? Number(process.env.PORT) : 5000;
 const app = express();
 app.use(express.json());
 
+// Utility delay function
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // --- Type Definitions ---
 interface FilePayload {
   type: 'file';
@@ -26,7 +29,7 @@ type RequestBody = FilePayload | ConfigPayload;
 async function buildRequestBody(): Promise<any> {
   const systemInstructions = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']))?.value || '';
   const prompt = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']))?.value || '';
-  const dataEntries = await db.all<{ file_path: string, file_content: string }>('SELECT file_path, file_content FROM data');
+  const dataEntries = await db.all<{ file_path: string, file_content: string }>('SELECT file_path, file_content FROM data ORDER BY id ASC');
 
   const contents: Array<{ role: string, parts: Array<{ text: string }> }> = [];
 
@@ -115,9 +118,11 @@ const handlePrompt = async (req: Request, res: Response) => {
   if (!apiKey) return res.status(400).json({ error: 'API key not set' });
   if (!model) return res.status(400).json({ error: 'Model not set' });
 
+  // Wait 3 seconds to ensure DB updates are visible before building the request body
+  await delay(3000);
   const requestBody = await buildRequestBody();
   const apiResponse = await postToGoogleAI(requestBody, apiKey, model);
-  res.json({ message: 'Prompt processed successfully', response: apiResponse.data });
+  res.json(apiResponse.data);
 };
 
 // --- Express App Setup ---

@@ -1,5 +1,5 @@
 import { createSQLiteStore } from '@code-ai-agent/lib';
-const store = createSQLiteStore('/tmp/anthropic_agent.db');
+const store = createSQLiteStore('/tmp/openai_agent.db');
 export const connectToDatabase = store.connectToDatabase;
 export const getDb = store.getDb;
 export const run = store.run;
