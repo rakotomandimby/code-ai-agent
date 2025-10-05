@@ -51,19 +51,21 @@ npm install @nx/node --save-dev
 ```bash
 npx nx reset \
 && npx nx build lib \
-&& npx nx build googleai-agent 
+&& npx nx build googleai-agent \
+&& npx nx build anthropic-agent
 ```
 
 ```bash
 npx nx serve googleai-agent
+npx nx serve anthropic-agent
 ```
 
 Or, leverage Nx parallelism to build and serve all projects:
 
 ```bash
 npx nx reset
-npx nx run-many --target=build --projects=googleai-agent,lib
-npx nx run-many --target=serve --projects=googleai-agent
+npx nx run-many --target=build --projects=lib,googleai-agent,anthropic-agent
+npx nx run-many --target=serve --projects=googleai-agent,anthropic-agent
 ```
 # How did I create the workspaces
 
@@ -79,5 +81,6 @@ npm install @nx/node --save-dev
 ```bash
 npx nx generate @nx/node:library lib
 npx nx generate @nx/node:application googleai-agent
+npx nx generate @nx/node:application anthropic-agent
 ```
 

@@ -3,7 +3,7 @@ import axios from 'axios';
 import * as db from './db';
 
 const host = process.env.HOST ?? 'localhost';
-const port = process.env.PORT ? Number(process.env.PORT) : 5000;
+const port = process.env.PORT ? Number(process.env.PORT) : 6000;
 
 const app = express();
 app.use(express.json());
@@ -28,41 +28,37 @@ async function buildRequestBody(): Promise<any> {
   const prompt = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']))?.value || '';
   const dataEntries = await db.all<{ file_path: string, file_content: string }>('SELECT file_path, file_content FROM data');
 
-  const contents: Array<{ role: string, parts: Array<{ text: string }> }> = [];
+  const messages: Array<{ role: string, content: string }> = [];
 
-  let firstUserMessage = 'I need your help on this project.';
-  if (systemInstructions) {
-    firstUserMessage = `${systemInstructions}\n\n${firstUserMessage}`;
-  }
-
-  contents.push({ role: 'user', parts: [{ text: firstUserMessage }] });
-  contents.push({ role: 'model', parts: [{ text: "Understood. I am ready to help. Please provide the file contents." }] });
+  let contextMessage = 'I need your help on this project.';
 
   for (const entry of dataEntries) {
-    contents.push({ role: 'user', parts: [{ text: `The content of the ${entry.file_path} file is: ${entry.file_content}` }] });
-    contents.push({ role: 'model', parts: [{ text: `I have read the content of ${entry.file_path}.` }] });
+    contextMessage += `\n\nThe content of the ${entry.file_path} file is:\n${entry.file_content}`;
   }
 
+  messages.push({ role: 'user', content: contextMessage });
+
   if (prompt) {
-    contents.push({ role: 'user', parts: [{ text: prompt }] });
+    messages.push({ role: 'user', content: prompt });
   }
 
   return {
-    contents,
-    generationConfig: {
-      temperature: 0.7,
-      topP: 0.9,
-      topK: 1,
-    }
+    model: '', // Will be set in postToAnthropic
+    max_tokens: 4096,
+    system: systemInstructions || undefined,
+    messages
   };
 }
 
-function postToGoogleAI(requestBody: any, apiKey: string, model: string): Promise<any> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+function postToAnthropic(requestBody: any, apiKey: string, model: string): Promise<any> {
+  const url = 'https://api.anthropic.com/v1/messages';
+  requestBody.model = model;
+
   return axios.post(url, requestBody, {
     headers: {
       'Content-Type': 'application/json',
-      'x-goog-api-key': apiKey
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
     }
   });
 }
@@ -116,7 +112,7 @@ const handlePrompt = async (req: Request, res: Response) => {
   if (!model) return res.status(400).json({ error: 'Model not set' });
 
   const requestBody = await buildRequestBody();
-  const apiResponse = await postToGoogleAI(requestBody, apiKey, model);
+  const apiResponse = await postToAnthropic(requestBody, apiKey, model);
   res.json({ message: 'Prompt processed successfully', response: apiResponse.data });
 };
 
@@ -148,8 +144,8 @@ app.post('/', async (req: Request, res: Response, next: NextFunction) => {
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('Error processing request:', err);
   if (axios.isAxiosError(err) && err.response) {
-    console.error('Error calling Google AI API:', err.response.data);
-    return res.status(500).json({ error: 'Failed to process prompt with Google AI API', details: err.response.data });
+    console.error('Error calling Anthropic API:', err.response.data);
+    return res.status(500).json({ error: 'Failed to process prompt with Anthropic API', details: err.response.data });
   }
   res.status(500).json({ error: 'Internal server error' });
 });
