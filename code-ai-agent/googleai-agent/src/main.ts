@@ -90,7 +90,6 @@ const handleConfig = async (req: Request, res: Response) => {
   }
 
   const { lastID } = await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', [dbKey, text]);
-  console.log(`${type} stored with row ID: ${lastID}`);
   res.json({ message: `${type} stored successfully`, rowId: lastID });
 };
 
@@ -100,7 +99,6 @@ const handleFile = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Missing filename or content for file' });
   }
   const { lastID } = await db.run('INSERT INTO data (file_path, file_content) VALUES (?, ?)', [filename, content]);
-  console.log(`File data stored with row ID: ${lastID}`);
   res.json({ message: 'File data stored successfully', rowId: lastID });
 };
 
@@ -165,8 +163,8 @@ async function startServer() {
     db.removeDatabaseFile();
     await db.connectToDatabase();
     await db.initializeDatabase();
-    app.listen(port, host, () => {
-      console.log(`[ ready ] http://${host}:${port}`);
+    app.listen(port, () => {
+      console.log(`[ ready ] http://0.0.0.0:${port}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
