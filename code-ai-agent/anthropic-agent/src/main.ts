@@ -1,55 +1,70 @@
-import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import * as db from './db';
+import { setDbStore, createApp, createPromptHandler, startServer } from '@code-ai-agent/lib';
 
-const host = process.env.HOST ?? 'localhost';
 const port = process.env.PORT ? Number(process.env.PORT) : 6000;
 
-const app = express();
-app.use(express.json());
+// Initialize the db instance for the shared library
+setDbStore({
+  connectToDatabase: db.connectToDatabase,
+  getDb: db.getDb,
+  run: db.run,
+  get: db.get,
+  all: db.all,
+  initializeDatabase: db.initializeDatabase,
+  resetDatabase: db.resetDatabase,
+  removeDatabaseFile: db.removeDatabaseFile,
+});
 
-// Utility delay function
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// --- Type Definitions ---
-interface FilePayload {
-  type: 'file';
-  filename: string;
-  content: string;
-}
-
-interface ConfigPayload {
-  type: 'api key' | 'system instructions' | 'model' | 'prompt';
-  text: string;
-}
-
-type RequestBody = FilePayload | ConfigPayload;
+type DataEntry = { file_path: string; file_content: string };
+type Message = { role: 'user' | 'assistant'; content: string };
 
 // --- API Interaction ---
-async function buildRequestBody(): Promise<any> {
-  const systemInstructions = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']))?.value || '';
-  const prompt = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']))?.value || '';
-  const dataEntries = await db.all<{ file_path: string, file_content: string }>('SELECT file_path, file_content FROM data ORDER BY id ASC');
+async function buildRequestBody(systemInstructions: string): Promise<any> {
+  const prompt =
+    (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']))?.value || '';
+  const dataEntries = await db.all<DataEntry>('SELECT file_path, file_content FROM data ORDER BY id ASC');
 
-  const messages: Array<{ role: string, content: string }> = [];
+  const messages: Message[] = [];
 
-  let contextMessage = 'I need your help on this project.';
+  messages.push({
+    role: 'user',
+    content: 'I need your help on this project.',
+  });
 
   for (const entry of dataEntries) {
-    contextMessage += `\n\nThe content of the ${entry.file_path} file is:\n${entry.file_content}`;
+    messages.push({
+      role: 'assistant',
+      content: `Please provide the content of the \`${entry.file_path}\` file.`,
+    });
+    messages.push({
+      role: 'user',
+      content: `Here is the content of the \`${entry.file_path}\` file:\n\`\`\`\n${entry.file_content}\n\`\`\`\n`,
+    });
   }
 
-  messages.push({ role: 'user', content: contextMessage });
+  if (!dataEntries.length && !prompt) {
+    messages.push({
+      role: 'assistant',
+      content: 'How would you like to proceed with this project?',
+    });
+  }
 
   if (prompt) {
-    messages.push({ role: 'user', content: prompt });
+    messages.push({
+      role: 'assistant',
+      content: 'What would you like to do next?',
+    });
+    messages.push({
+      role: 'user',
+      content: prompt,
+    });
   }
 
   return {
-    model: '', // Will be set in postToAnthropic
     max_tokens: 32000,
     system: systemInstructions || undefined,
-    messages
+    messages,
   };
 }
 
@@ -61,111 +76,19 @@ function postToAnthropic(requestBody: any, apiKey: string, model: string): Promi
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
-    }
+      'anthropic-version': '2023-06-01',
+    },
   });
 }
 
-// --- Route Handlers ---
-const handleConfig = async (req: Request, res: Response) => {
-  const { type, text } = req.body as ConfigPayload;
-  const keyMap = {
-    'api key': 'api_key',
-    'system instructions': 'system_instructions',
-    'model': 'model',
-    'prompt': 'prompt',
-  };
-  const dbKey = keyMap[type];
-
-  if (!text) {
-    return res.status(400).json({ error: `Missing text field for ${type}` });
-  }
-
-  if (type === 'api key') {
-    await db.resetDatabase();
-  }
-
-  const { lastID } = await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', [dbKey, text]);
-  res.json({ message: `${type} stored successfully`, rowId: lastID });
-};
-
-const handleFile = async (req: Request, res: Response) => {
-  const { filename, content } = req.body as FilePayload;
-  if (!filename || !content) {
-    return res.status(400).json({ error: 'Missing filename or content for file' });
-  }
-  const { lastID } = await db.run('INSERT INTO data (file_path, file_content) VALUES (?, ?)', [filename, content]);
-  res.json({ message: 'File data stored successfully', rowId: lastID });
-};
-
-const handlePrompt = async (req: Request, res: Response) => {
-  const { text } = req.body as ConfigPayload;
-  if (!text) {
-    return res.status(400).json({ error: 'Missing text field for prompt' });
-  }
-
-  await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', ['prompt', text]);
-
-  const apiKey = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['api_key']))?.value;
-  const model = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['model']))?.value;
-
-  if (!apiKey) return res.status(400).json({ error: 'API key not set' });
-  if (!model) return res.status(400).json({ error: 'Model not set' });
-
-  // Wait 3 seconds to ensure DB updates are visible before building the request body
-  await delay(3000);
-  const requestBody = await buildRequestBody();
+async function processPrompt(apiKey: string, model: string, instructions: string): Promise<any> {
+  const requestBody = await buildRequestBody(instructions);
   const apiResponse = await postToAnthropic(requestBody, apiKey, model);
-  res.json(apiResponse.data);
-};
-
-// --- Express App Setup ---
-app.post('/', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { type } = req.body as RequestBody;
-    switch (type) {
-      case 'api key':
-      case 'system instructions':
-      case 'model':
-        await handleConfig(req, res);
-        break;
-      case 'file':
-        await handleFile(req, res);
-        break;
-      case 'prompt':
-        await handlePrompt(req, res);
-        break;
-      default:
-        res.status(400).json({ error: `Invalid type specified: ${type}` });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Global error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Error processing request:', err);
-  if (axios.isAxiosError(err) && err.response) {
-    console.error('Error calling Anthropic API:', err.response.data);
-    return res.status(500).json({ error: 'Failed to process prompt with Anthropic API', details: err.response.data });
-  }
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// --- Server Initialization ---
-async function startServer() {
-  try {
-    db.removeDatabaseFile();
-    await db.connectToDatabase();
-    await db.initializeDatabase();
-    app.listen(port, () => {
-      console.log(`[ ready ] http://0.0.0.0:${port}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+  return apiResponse.data;
 }
 
-startServer();
+const handlePrompt = createPromptHandler(processPrompt);
+const app = createApp(handlePrompt, 'Anthropic');
+
+startServer(app, port, db.removeDatabaseFile);
+

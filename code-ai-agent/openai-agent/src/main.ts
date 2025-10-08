@@ -1,29 +1,20 @@
-import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import * as db from './db';
+import { setDbStore, createApp, createPromptHandler, startServer } from '@code-ai-agent/lib';
 
-const host = process.env.HOST ?? 'localhost';
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 
-const app = express();
-app.use(express.json());
-
-// Utility delay function
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// --- Type Definitions ---
-interface FilePayload {
-  type: 'file';
-  filename: string;
-  content: string;
-}
-
-interface ConfigPayload {
-  type: 'api key' | 'system instructions' | 'model' | 'prompt';
-  text: string;
-}
-
-type RequestBody = FilePayload | ConfigPayload;
+// Initialize the db instance for the shared library
+setDbStore({
+  connectToDatabase: db.connectToDatabase,
+  getDb: db.getDb,
+  run: db.run,
+  get: db.get,
+  all: db.all,
+  initializeDatabase: db.initializeDatabase,
+  resetDatabase: db.resetDatabase,
+  removeDatabaseFile: db.removeDatabaseFile,
+});
 
 // --- API Interaction (OpenAI Responses API) ---
 async function buildRequestBody(): Promise<any> {
@@ -56,9 +47,8 @@ async function buildRequestBody(): Promise<any> {
 
   const input = parts.join('\n\n');
   return {
-    // Model will be set in postToOpenAI
     input,
-    max_output_tokens: 1024*96
+    max_output_tokens: 1024 * 96
   };
 }
 
@@ -75,107 +65,14 @@ function postToOpenAI(requestBody: any, apiKey: string, model: string, instructi
   });
 }
 
-// --- Route Handlers ---
-const handleConfig = async (req: Request, res: Response) => {
-  const { type, text } = req.body as ConfigPayload;
-  const keyMap = {
-    'api key': 'api_key',
-    'system instructions': 'system_instructions',
-    'model': 'model',
-    'prompt': 'prompt',
-  };
-  const dbKey = keyMap[type];
-
-  if (!text) {
-    return res.status(400).json({ error: `Missing text field for ${type}` });
-  }
-
-  if (type === 'api key') {
-    await db.resetDatabase();
-  }
-
-  const { lastID } = await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', [dbKey, text]);
-  res.json({ message: `${type} stored successfully`, rowId: lastID });
-};
-
-const handleFile = async (req: Request, res: Response) => {
-  const { filename, content } = req.body as FilePayload;
-  if (!filename || !content) {
-    return res.status(400).json({ error: 'Missing filename or content for file' });
-  }
-  const { lastID } = await db.run('INSERT INTO data (file_path, file_content) VALUES (?, ?)', [filename, content]);
-  res.json({ message: 'File data stored successfully', rowId: lastID });
-};
-
-const handlePrompt = async (req: Request, res: Response) => {
-  const { text } = req.body as ConfigPayload;
-  if (!text) {
-    return res.status(400).json({ error: 'Missing text field for prompt' });
-  }
-
-  await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', ['prompt', text]);
-
-  const apiKey = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['api_key']))?.value;
-  const model = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['model']))?.value;
-  const instructions = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']))?.value || '';
-
-  if (!apiKey) return res.status(400).json({ error: 'API key not set' });
-  if (!model) return res.status(400).json({ error: 'Model not set' });
-
-  // Wait 3 seconds to ensure DB updates are visible before building the request body
-  await delay(3000);
+async function processPrompt(apiKey: string, model: string, instructions: string): Promise<any> {
   const requestBody = await buildRequestBody();
   const apiResponse = await postToOpenAI(requestBody, apiKey, model, instructions);
-  res.json(apiResponse.data);
-};
-
-// --- Express App Setup ---
-app.post('/', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { type } = req.body as RequestBody;
-    switch (type) {
-      case 'api key':
-      case 'system instructions':
-      case 'model':
-        await handleConfig(req, res);
-        break;
-      case 'file':
-        await handleFile(req, res);
-        break;
-      case 'prompt':
-        await handlePrompt(req, res);
-        break;
-      default:
-        res.status(400).json({ error: `Invalid type specified: ${type}` });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Global error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Error processing request:', err);
-  if (axios.isAxiosError(err) && err.response) {
-    console.error('Error calling OpenAI API:', err.response.data);
-    return res.status(500).json({ error: 'Failed to process prompt with OpenAI API', details: err.response.data });
-  }
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// --- Server Initialization ---
-async function startServer() {
-  try {
-    db.removeDatabaseFile();
-    await db.connectToDatabase();
-    await db.initializeDatabase();
-    app.listen(port, () => {
-      console.log(`[ ready ] http://0.0.0.0:${port}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+  return apiResponse.data;
 }
 
-startServer();
+const handlePrompt = createPromptHandler(processPrompt);
+const app = createApp(handlePrompt, 'OpenAI');
+
+startServer(app, port, db.removeDatabaseFile);
+
