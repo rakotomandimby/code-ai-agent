@@ -11,6 +11,9 @@ export function createApp(handlePrompt: PromptHandler, apiName: string): express
       const { type } = req.body as RequestBody;
       switch (type) {
         case 'api key':
+          console.log(`>>>> Request received on ${apiName}`);
+          await handleConfig(req, res);
+          break;
         case 'system instructions':
         case 'model':
           await handleConfig(req, res);

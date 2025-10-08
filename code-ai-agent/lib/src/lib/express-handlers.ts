@@ -52,7 +52,8 @@ export interface PromptHandler {
 }
 
 export function createPromptHandler(
-  processPrompt: (apiKey: string, model: string, instructions: string) => Promise<any>
+  processPrompt: (apiKey: string, model: string, instructions: string) => Promise<any>,
+  agentName = 'Agent'
 ): PromptHandler {
   return async (req: Request, res: Response): Promise<void> => {
     const { text } = req.body as ConfigPayload;
@@ -63,9 +64,13 @@ export function createPromptHandler(
 
     await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', ['prompt', text]);
 
-    const apiKey = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['api_key']))?.value;
-    const model = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['model']))?.value;
-    const instructions = (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']))?.value || '';
+    const apiKeyRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['api_key']);
+    const modelRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['model']);
+    const instructionsRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']);
+
+    const apiKey = apiKeyRecord?.value;
+    const model = modelRecord?.value;
+    const instructions = instructionsRecord?.value || '';
 
     if (!apiKey) {
       res.status(400).json({ error: 'API key not set' });
@@ -76,10 +81,15 @@ export function createPromptHandler(
       return;
     }
 
-    // Wait 3 seconds to ensure DB updates are visible
+    console.log(`>>>> Waiting a bit before sending the request to ${agentName} - ${model}`);
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
+    console.log(`>>>> Sending request to ${agentName} - ${model}`);
+    const startTime = Date.now();
     const apiResponse = await processPrompt(apiKey, model, instructions);
+    const durationSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`<<<< Response received from ${agentName} - ${model} (took ${durationSeconds}s)`);
+
     res.json(apiResponse);
   };
 }

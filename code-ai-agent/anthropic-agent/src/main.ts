@@ -125,7 +125,7 @@ async function processPrompt(apiKey: string, model: string, instructions: string
   }
 }
 
-const handlePrompt = createPromptHandler(processPrompt);
+const handlePrompt = createPromptHandler(processPrompt, 'Anthropic');
 const app = createApp(handlePrompt, 'Anthropic');
 
 startServer(app, port, db.removeDatabaseFile);

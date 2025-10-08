@@ -114,7 +114,7 @@ async function processPrompt(apiKey: string, model: string, instructions: string
   }
 }
 
-const handlePrompt = createPromptHandler(processPrompt);
+const handlePrompt = createPromptHandler(processPrompt, 'OpenAI');
 const app = createApp(handlePrompt, 'OpenAI');
 
 startServer(app, port, db.removeDatabaseFile);
