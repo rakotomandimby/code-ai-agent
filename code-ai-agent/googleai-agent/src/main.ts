@@ -94,10 +94,51 @@ function postToGoogleAI(requestBody: any, apiKey: string, model: string): Promis
   });
 }
 
+function createErrorResponse(errorMessage: string): any {
+  return {
+    candidates: [
+      {
+        content: {
+          parts: [
+            {
+              text: errorMessage
+            }
+          ],
+          role: 'model'
+        },
+      }
+    ],
+    usageMetadata: {
+      promptTokenCount: 0,
+      candidatesTokenCount: 0,
+      totalTokenCount: 0
+    }
+  };
+}
+
 async function processPrompt(apiKey: string, model: string, instructions: string): Promise<any> {
-  const requestBody = await buildRequestBody(instructions);
-  const apiResponse = await postToGoogleAI(requestBody, apiKey, model);
-  return apiResponse.data;
+  try {
+    const requestBody = await buildRequestBody(instructions);
+    const apiResponse = await postToGoogleAI(requestBody, apiKey, model);
+    return apiResponse.data;
+  } catch (error) {
+    let errorMessage = 'An unknown error occurred while processing your request.';
+
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage = `API Error (${error.response.status}): ${JSON.stringify(error.response.data)}`;
+      } else if (error.request) {
+        errorMessage = 'Network error: No response received from the API.';
+      } else {
+        errorMessage = `Request error: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = `Error: ${error.message}`;
+    }
+
+    console.error('Google AI API error:', errorMessage);
+    return createErrorResponse(errorMessage);
+  }
 }
 
 const handlePrompt = createPromptHandler(processPrompt);

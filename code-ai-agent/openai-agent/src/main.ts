@@ -65,10 +65,53 @@ function postToOpenAI(requestBody: any, apiKey: string, model: string, instructi
   });
 }
 
+function createErrorResponse(errorMessage: string, model: string): any {
+  return {
+    model: model,
+    output: [
+      {
+        type: 'message',
+        role: 'assistant',
+        content: [
+          {
+            type: 'output_text',
+            text: errorMessage,
+            annotations: []
+          }
+        ]
+      }
+    ],
+    usage: {
+      input_tokens: 0,
+      output_tokens: 0,
+      total_tokens: 0
+    },
+  };
+}
+
 async function processPrompt(apiKey: string, model: string, instructions: string): Promise<any> {
-  const requestBody = await buildRequestBody();
-  const apiResponse = await postToOpenAI(requestBody, apiKey, model, instructions);
-  return apiResponse.data;
+  try {
+    const requestBody = await buildRequestBody();
+    const apiResponse = await postToOpenAI(requestBody, apiKey, model, instructions);
+    return apiResponse.data;
+  } catch (error) {
+    let errorMessage = 'An unknown error occurred while processing your request.';
+
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage = `API Error (${error.response.status}): ${JSON.stringify(error.response.data)}`;
+      } else if (error.request) {
+        errorMessage = 'Network error: No response received from the API.';
+      } else {
+        errorMessage = `Request error: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = `Error: ${error.message}`;
+    }
+
+    console.error('OpenAI API error:', errorMessage);
+    return createErrorResponse(errorMessage, model);
+  }
 }
 
 const handlePrompt = createPromptHandler(processPrompt);

@@ -81,10 +81,48 @@ function postToAnthropic(requestBody: any, apiKey: string, model: string): Promi
   });
 }
 
+function createErrorResponse(errorMessage: string, model: string): any {
+  return {
+    content: [
+      {
+        text: errorMessage,
+        type: 'text'
+      }
+    ],
+    model: model,
+    role: 'assistant',
+    stop_reason: 'end_turn',
+    type: 'message',
+    usage: {
+      input_tokens: 0,
+      output_tokens: 0
+    }
+  };
+}
+
 async function processPrompt(apiKey: string, model: string, instructions: string): Promise<any> {
-  const requestBody = await buildRequestBody(instructions);
-  const apiResponse = await postToAnthropic(requestBody, apiKey, model);
-  return apiResponse.data;
+  try {
+    const requestBody = await buildRequestBody(instructions);
+    const apiResponse = await postToAnthropic(requestBody, apiKey, model);
+    return apiResponse.data;
+  } catch (error) {
+    let errorMessage = 'An unknown error occurred while processing your request.';
+
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage = `API Error (${error.response.status}): ${JSON.stringify(error.response.data)}`;
+      } else if (error.request) {
+        errorMessage = 'Network error: No response received from the API.';
+      } else {
+        errorMessage = `Request error: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = `Error: ${error.message}`;
+    }
+
+    console.error('Anthropic API error:', errorMessage);
+    return createErrorResponse(errorMessage, model);
+  }
 }
 
 const handlePrompt = createPromptHandler(processPrompt);
