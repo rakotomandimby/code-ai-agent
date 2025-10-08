@@ -23,6 +23,8 @@ It utilizes an Express server to handle HTTP requests and responses, allowing us
 The agent is built around a repository pattern that manages the storage and retrieval of conversation data, ensuring that interactions are contextually aware. 
 The implementation includes a dedicated HTTP client that abstracts the complexities of API communication, making it easier to integrate and extend the functionality of the ChatGPT agent.
 
+Special Note: The OpenAI agent targets the [Responses API of OpenAI, which is different from the Chat Completions API](https://platform.openai.com/docs/guides/migrate-to-responses). That is because the [ChatGPT 5 Codex model is only available through the Responses API](https://platform.openai.com/docs/models/gpt-5-codex).
+
 ## GoogleAI Gemini Agent
 
 The Gemini agent, found in the [./googleai-agent/](./code-ai-agent/googleai-agent/) directory, serves a similar purpose but is tailored to interact with Google's Gemini model. 
@@ -30,6 +32,12 @@ Like the ChatGPT agent, it is built on an Express framework and follows a modula
 The Gemini agent also employs a repository pattern for managing conversation history and settings, ensuring that user interactions are preserved across sessions. 
 The agent's HTTP client is specifically configured to communicate with the Gemini API, providing a seamless experience for users looking to leverage the capabilities of this advanced AI model.
 
+# Anthropic Agent
+
+The Anthropic agent, located in the [./anthropic-agent/](./code-ai-agent/anthropic-agent/) directory, is designed to interface with Anthropic's Claude model.
+It shares a similar architecture with the other agents, utilizing an Express server to manage HTTP requests and responses. 
+The agent is structured around a repository pattern that handles the storage and retrieval of conversation data, ensuring that interactions are contextually relevant. 
+The implementation includes a specialized HTTP client that abstracts the
 
 # Installation
 
