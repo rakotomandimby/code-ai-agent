@@ -1,3 +1,29 @@
+# Inform about processing 
+
+I want each agent to print several things when it processes a user request:
+
+- Print ">>>> Request received on {AGENT_NAME}" when it receives the "api key" data
+- Print ">>>> Waiting a bit before sending the request to the {AGENT_NAME} - {AI_MODEL}" just before the 3 seconds wait
+- Print ">>>> Sending request to {AGENT_NAME} - {AI_MODEL}" just before sending the request to the AI model
+- Print "<<<< Response received from {AGENT_NAME} - {AI_MODEL}" (took {TIME_TAKEN}s)" when it receives the response from the AI_MODEL
+
+Where {AGENT_NAME} is the name of the agent (GoogleAI, OpenAI, Anthropic), {AI_MODEL} is the model being used (e.g., gpt-4, gpt-3.5-turbo, claude-2, etc.),
+and {TIME_TAKEN} is the time between sending the request to the AI model API and receiving the response.
+
+I made the changes for Anthropic agent, OpenAI agent, but I need you to give me the content for the GoogleAI agent.
+Tell me the full content of the files I need to change in order to implement this logging functionality.
+
+
+# GGL Implement logging for Google AI agent
+
+I will update the `googleai-agent/src/main.ts` file to ensure that the agent's name, "Google AI", is correctly passed to the `createPromptHandler` function. This will enable the shared logging functionality in the `@code-ai-agent/lib` package to print the agent's name along with the model and time taken during request processing, aligning with the logging behavior of the Anthropic and OpenAI agents. The other requested logging messages are already handled by the shared `createApp` and `createPromptHandler` functions in the `lib` package, so no further changes are needed for those.
+
+### Files to be modified:
+
+-   `googleai-agent/src/main.ts`
+
+```typescript
+// googleai-agent/src/main.ts
 import axios from 'axios';
 import * as db from './db';
 import { setDbStore, createApp, createPromptHandler, startServer } from '@code-ai-agent/lib';
@@ -141,8 +167,13 @@ async function processPrompt(apiKey: string, model: string, instructions: string
   }
 }
 
-const handlePrompt = createPromptHandler(processPrompt, 'GoogleAI');
-const app = createApp(handlePrompt, 'GoogleAI');
+// I am updating the createPromptHandler call to pass the agent name 'Google AI'
+const handlePrompt = createPromptHandler(processPrompt, 'Google AI');
+const app = createApp(handlePrompt, 'Google AI');
 
 startServer(app, port, db.removeDatabaseFile);
+```
+
+GoogleAI gemini-2.5-flash (12k in, 1k out)
+
 

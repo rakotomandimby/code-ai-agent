@@ -11,11 +11,10 @@
       "options": {
         "outputPath": "dist/lib",
         "tsConfig": "lib/tsconfig.lib.json",
+        "packageJson": "lib/package.json",
         "main": "lib/src/index.ts",
-        "assets": ["lib/src/assets"], // If you have any assets
-        "updateBuildableProjectDepsInPackageJson": true
+        "assets": ["lib/*.md"]
       }
     }
   }
 }
-

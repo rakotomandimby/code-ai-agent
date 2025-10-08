@@ -1,3 +1,30 @@
+# Inform about processing 
+
+I want each agent to print several things when it processes a user request:
+
+- Print ">>>> Request received on {AGENT_NAME}" when it receives the "api key" data
+- Print ">>>> Waiting a bit before sending the request to the {AGENT_NAME} - {AI_MODEL}" just before the 3 seconds wait
+- Print ">>>> Sending request to {AGENT_NAME} - {AI_MODEL}" just before sending the request to the AI model
+- Print "<<<< Response received from {AGENT_NAME} - {AI_MODEL}" (took {TIME_TAKEN}s)" when it receives the response from the AI_MODEL
+
+Where {AGENT_NAME} is the name of the agent (GoogleAI, OpenAI, Anthropic), {AI_MODEL} is the model being used (e.g., gpt-4, gpt-3.5-turbo, claude-2, etc.),
+and {TIME_TAKEN} is the time between sending the request to the AI model API and receiving the response.
+
+I made the changes for Anthropic agent, OpenAI agent, but I need you to give me the content for the GoogleAI agent.
+Tell me the full content of the files I need to change in order to implement this logging functionality.
+
+
+# OPN Update GoogleAI agent to use the proper agent name in logging statements
+
+I update the GoogleAI agent entrypoint so that all log messages now use the `GoogleAI` agent name, ensuring the runtime logging aligns with the expected format for API key reception and prompt processing.
+
+## Explanation
+I pass the explicit `"GoogleAI"` label when creating the prompt handler and Express app, which guarantees that every log message produced by the shared middleware reflects the correct agent name, matching the existing Anthropic and OpenAI agents.
+
+## Full File Contents
+
+### `code-ai-agent/googleai-agent/src/main.ts`
+```typescript
 import axios from 'axios';
 import * as db from './db';
 import { setDbStore, createApp, createPromptHandler, startServer } from '@code-ai-agent/lib';
@@ -145,4 +172,11 @@ const handlePrompt = createPromptHandler(processPrompt, 'GoogleAI');
 const app = createApp(handlePrompt, 'GoogleAI');
 
 startServer(app, port, db.removeDatabaseFile);
+```
+
+## Files Modified
+- `code-ai-agent/googleai-agent/src/main.ts`
+
+OpenAI gpt-5-codex (9664 in, 2471 out)
+
 

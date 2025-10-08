@@ -3,7 +3,6 @@
   "$schema": "../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "googleai-agent/src",
   "projectType": "application",
-  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",
@@ -37,24 +36,49 @@
         }
       }
     },
+    "prune-lockfile": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/dist/googleai-agent/package.json",
+        "{workspaceRoot}/dist/googleai-agent/package-lock.json"
+      ],
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "copy-workspace-modules": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["{workspaceRoot}/dist/googleai-agent/workspace_modules"],
+      "executor": "@nx/js:copy-workspace-modules",
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "prune": {
+      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+      "executor": "nx:noop"
+    },
     "serve": {
+      "continuous": true,
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "dependsOn": ["build"],
       "options": {
         "buildTarget": "googleai-agent:build",
-        "runBuildTargetDependencies": false,
-        "port": 5000,
-        "inspect": false,
+        "runBuildTargetDependencies": false
       },
       "configurations": {
         "development": {
-          "buildTarget": "googleai-agent:build:development",
+          "buildTarget": "googleai-agent:build:development"
         },
         "production": {
           "buildTarget": "googleai-agent:build:production"
         }
       }
     }
-  }
+  },
+  "tags": []
 }

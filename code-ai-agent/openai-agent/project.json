@@ -3,7 +3,6 @@
   "$schema": "../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "openai-agent/src",
   "projectType": "application",
-  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",
@@ -37,24 +36,49 @@
         }
       }
     },
+    "prune-lockfile": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/dist/openai-agent/package.json",
+        "{workspaceRoot}/dist/openai-agent/package-lock.json"
+      ],
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "copy-workspace-modules": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["{workspaceRoot}/dist/openai-agent/workspace_modules"],
+      "executor": "@nx/js:copy-workspace-modules",
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "prune": {
+      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+      "executor": "nx:noop"
+    },
     "serve": {
+      "continuous": true,
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "dependsOn": ["build"],
       "options": {
         "buildTarget": "openai-agent:build",
-        "runBuildTargetDependencies": false,
-        "port": 4000,
-        "inspect": false,
+        "runBuildTargetDependencies": false
       },
       "configurations": {
         "development": {
-          "buildTarget": "openai-agent:build:development",
+          "buildTarget": "openai-agent:build:development"
         },
         "production": {
           "buildTarget": "openai-agent:build:production"
         }
       }
     }
-  }
+  },
+  "tags": []
 }
