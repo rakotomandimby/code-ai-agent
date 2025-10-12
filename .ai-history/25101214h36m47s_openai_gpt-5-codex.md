@@ -1,3 +1,20 @@
+# Convert OpenAI request body to multi-turn chat format
+
+Current resquest body sent to OpenAI API is not multi-turn chat.
+But request body sent to Anthropics and GoogleAI are multi-turn chat.
+
+I want to convert the request body sent to OpenAI API to multi-turn chat.
+
+Tell me the full new content of the files I need to modify in order to achieve sending multi-turn chat request body to OpenAI API.
+
+
+
+# OPN Convert the OpenAI agent payload into a multi-turn chat conversation for the Responses API  
+I convert the OpenAI agent request construction so that the payload sent to the Responses API is now a structured multi-turn chat conversation, mirroring the approach already used for the Anthropic and GoogleAI agents while preserving resilience when no prompt or files are present.
+
+## Updated File: `code-ai-agent/openai-agent/src/main.ts`
+
+```typescript
 import axios from 'axios';
 import * as db from './db';
 import { setDbStore, createApp, createPromptHandler, startServer } from '@code-ai-agent/lib';
@@ -144,4 +161,14 @@ const handlePrompt = createPromptHandler(processPrompt, 'OpenAI');
 const app = createApp(handlePrompt, 'OpenAI');
 
 startServer(app, port, db.removeDatabaseFile);
+```
+
+## Explanation
+I restructured `buildRequestBody` to assemble a multi-turn chat conversation that mirrors the interaction flow used in the other agents: it now yields an array of role/content pairs representing the dialogue, guarantees the final entry is a user message as required by the Responses API, and leaves the rest of the request pipeline unchanged so existing behaviors (including instruction handling and error responses) continue to function.
+
+## Modified Files
+- `code-ai-agent/openai-agent/src/main.ts`
+
+OpenAI gpt-5-codex (9.91k in, 5.02k out)
+
 
