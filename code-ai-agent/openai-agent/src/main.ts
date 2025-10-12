@@ -21,8 +21,8 @@ type ConversationMessage = { role: 'user' | 'assistant'; content: string };
 
 // --- API Interaction (OpenAI Responses API) ---
 async function buildRequestBody(): Promise<any> {
-  const prompt =
-    (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']))?.value || '';
+  const promptRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']);
+  const prompt = promptRecord?.value?.trim() ?? '';
   const dataEntries = await db.all<DataEntry>('SELECT file_path, file_content FROM data ORDER BY id ASC');
 
   const messages: ConversationMessage[] = [];
@@ -57,7 +57,7 @@ async function buildRequestBody(): Promise<any> {
     });
     messages.push({
       role: 'user',
-      content: prompt.trim(),
+      content: prompt,
     });
   }
 
@@ -80,8 +80,12 @@ async function buildRequestBody(): Promise<any> {
 
 function postToOpenAI(requestBody: any, apiKey: string, model: string, instructions: string): Promise<any> {
   const url = 'https://api.openai.com/v1/responses';
+  const sanitizedInstructions = instructions.trim();
+
   requestBody.model = model;
-  requestBody.instructions = instructions;
+  if (sanitizedInstructions) {
+    requestBody.instructions = sanitizedInstructions;
+  }
 
   return axios.post(url, requestBody, {
     headers: {
@@ -118,7 +122,8 @@ function createErrorResponse(errorMessage: string, model: string): any {
 async function processPrompt(apiKey: string, model: string, instructions: string): Promise<any> {
   try {
     const requestBody = await buildRequestBody();
-    const apiResponse = await postToOpenAI(requestBody, apiKey, model, instructions);
+    const sanitizedInstructions = instructions.trim();
+    const apiResponse = await postToOpenAI(requestBody, apiKey, model, sanitizedInstructions);
     return apiResponse.data;
   } catch (error) {
     let errorMessage = 'An unknown error occurred while processing your request.';

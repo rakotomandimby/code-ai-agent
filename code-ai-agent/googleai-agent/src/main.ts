@@ -20,9 +20,9 @@ type DataEntry = { file_path: string; file_content: string };
 type Content = { role: 'user' | 'model'; parts: Array<{ text: string }> };
 
 // --- API Interaction ---
-async function buildRequestBody(systemInstructions: string): Promise<any> {
-  const prompt =
-    (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']))?.value || '';
+async function buildRequestBody(instructions: string): Promise<any> {
+  const promptRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']);
+  const prompt = promptRecord?.value?.trim() ?? '';
   const dataEntries = await db.all<DataEntry>('SELECT file_path, file_content FROM data ORDER BY id ASC');
 
   const contents: Content[] = [];
@@ -65,6 +65,14 @@ async function buildRequestBody(systemInstructions: string): Promise<any> {
     });
   }
 
+  const lastMessage = contents[contents.length - 1];
+  if (!lastMessage || lastMessage.role !== 'user') {
+    contents.push({
+      role: 'user',
+      parts: [{ text: 'Please let me know how you would like to proceed.' }],
+    });
+  }
+
   const requestBody: any = {
     contents,
     generationConfig: {
@@ -74,10 +82,11 @@ async function buildRequestBody(systemInstructions: string): Promise<any> {
     },
   };
 
-  if (systemInstructions) {
+  const sanitizedInstructions = instructions.trim();
+  if (sanitizedInstructions) {
     requestBody.system_instruction = {
       role: 'system',
-      parts: [{ text: systemInstructions }],
+      parts: [{ text: sanitizedInstructions }],
     };
   }
 
@@ -101,18 +110,18 @@ function createErrorResponse(errorMessage: string): any {
         content: {
           parts: [
             {
-              text: errorMessage
-            }
+              text: errorMessage,
+            },
           ],
-          role: 'model'
+          role: 'model',
         },
-      }
+      },
     ],
     usageMetadata: {
       promptTokenCount: 0,
       candidatesTokenCount: 0,
-      totalTokenCount: 0
-    }
+      totalTokenCount: 0,
+    },
   };
 }
 

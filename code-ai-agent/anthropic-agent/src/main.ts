@@ -20,9 +20,9 @@ type DataEntry = { file_path: string; file_content: string };
 type Message = { role: 'user' | 'assistant'; content: string };
 
 // --- API Interaction ---
-async function buildRequestBody(systemInstructions: string): Promise<any> {
-  const prompt =
-    (await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']))?.value || '';
+async function buildRequestBody(instructions: string): Promise<any> {
+  const promptRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']);
+  const prompt = promptRecord?.value?.trim() ?? '';
   const dataEntries = await db.all<DataEntry>('SELECT file_path, file_content FROM data ORDER BY id ASC');
 
   const messages: Message[] = [];
@@ -61,9 +61,19 @@ async function buildRequestBody(systemInstructions: string): Promise<any> {
     });
   }
 
+  const lastMessage = messages[messages.length - 1];
+  if (!lastMessage || lastMessage.role !== 'user') {
+    messages.push({
+      role: 'user',
+      content: 'Please let me know how you would like to proceed.',
+    });
+  }
+
+  const sanitizedInstructions = instructions.trim();
+
   return {
     max_tokens: 32000,
-    system: systemInstructions || undefined,
+    system: sanitizedInstructions || undefined,
     messages,
   };
 }
@@ -86,8 +96,8 @@ function createErrorResponse(errorMessage: string, model: string): any {
     content: [
       {
         text: errorMessage,
-        type: 'text'
-      }
+        type: 'text',
+      },
     ],
     model: model,
     role: 'assistant',
@@ -95,8 +105,8 @@ function createErrorResponse(errorMessage: string, model: string): any {
     type: 'message',
     usage: {
       input_tokens: 0,
-      output_tokens: 0
-    }
+      output_tokens: 0,
+    },
   };
 }
 
