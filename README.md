@@ -49,13 +49,6 @@ Check [./code-ai-agent/code-ai-agent-monorepo](./code-ai-agent/code-ai-agent-mon
 But manually, you can do the following:
 
 ```bash
-cd code-ai-agent/
-npm install nx@latest --save-dev
-npm install @nx/node --save-dev
-```
-
-
-```bash
 npx nx reset \
 && npx nx build lib \
 && npx nx build googleai-agent \
@@ -94,3 +87,8 @@ npx nx generate @nx/node:application anthropic-agent
 npx nx generate @nx/node:application openai-agent
 ```
 
+```bash
+cd code-ai-agent/
+npm install nx@latest --save-dev
+npm install @nx/node --save-dev
+```

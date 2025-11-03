@@ -80,15 +80,21 @@ async function buildRequestBody(instructions: string): Promise<any> {
 
 function postToAnthropic(requestBody: any, apiKey: string, model: string): Promise<any> {
   const url = 'https://api.anthropic.com/v1/messages';
-  requestBody.model = model;
+  const headers = model.startsWith('claude-sonnet-4')
+    ? {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'context-1m-2025-08-07',
+      }
+    : {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      };
+  const body = { ...requestBody, model };
 
-  return axios.post(url, requestBody, {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-  });
+  return axios.post(url, body, { headers });
 }
 
 function createErrorResponse(errorMessage: string, model: string): any {
