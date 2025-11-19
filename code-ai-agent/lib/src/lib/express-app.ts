@@ -4,7 +4,8 @@ import { RequestBody, handleConfig, handleFile, PromptHandler } from './express-
 
 export function createApp(handlePrompt: PromptHandler, apiName: string): express.Application {
   const app = express();
-  app.use(express.json());
+  // Increase the body limit to 50mb to handle large file payloads
+  app.use(express.json({ limit: '50mb' }));
 
   app.post('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
