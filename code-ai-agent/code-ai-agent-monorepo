@@ -1,11 +1,28 @@
 #!/bin/bash
 
-# Adapt those paths to your own
-export PATH="/home/rsync/node/bin:${PATH}"
-export WORKDIR=/home/rsync/code-ai-agent-monorepo/code-ai-agent
+export HSOTNAME=$(hostname)
+echo "Starting services on ${HSOTNAME}"
 
-cd ${WORKDIR}
-npm install -f
-npx nx reset
-npx nx run-many --target=build --projects=lib,anthropic-agent,openai-agent,googleai-agent
-npx nx run-many --target=serve --projects=anthropic-agent,openai-agent,googleai-agent
+# if hostname is "a-rktmb" then WORKDIR must be "/home/mihamina/Projects/RKTMB/rktmb-code-ai-agent-monorepo/code-ai-agent"
+if [ "${HSOTNAME}" == "a-rktmb" ]; then
+  export WORKDIR="/home/mihamina/Projects/RKTMB/rktmb-code-ai-agent-monorepo/code-ai-agent"
+  cd ${WORKDIR}
+  npm install
+  npx nx reset \
+    && npx nx build lib \
+    && npx nx build googleai-agent \
+    && npx nx build anthropic-agent \
+    && npx nx build openai-agent \
+    && npx nx build github-agent
+
+else
+  # Adapt those paths to your own
+  export PATH="/home/rsync/node/bin:${PATH}"
+  export WORKDIR=/home/rsync/code-ai-agent-monorepo/code-ai-agent
+  cd ${WORKDIR}
+  npm install
+  npx nx reset
+  npx nx run-many --target=build --projects=lib,anthropic-agent,openai-agent,googleai-agent,github-agent
+  npx nx run-many --target=serve --projects=anthropic-agent,openai-agent,googleai-agent,github-agent
+fi
+
