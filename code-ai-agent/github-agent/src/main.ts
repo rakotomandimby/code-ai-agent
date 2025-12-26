@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as db from './db';
 import { setDbStore, createApp, createPromptHandler, startServer } from '@code-ai-agent/lib';
 
-const port = process.env.PORT ? Number(process.env.PORT) : 7000;
+const port = process.env.PORT ? Number(process.env.PORT) : 7010;
 
 
 
