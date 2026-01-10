@@ -58,25 +58,42 @@ export function createPromptHandler(
   return async (req: Request, res: Response): Promise<void> => {
     const { text } = req.body as ConfigPayload;
     if (!text) {
+      console.error(`[${agentName}] Error: Missing text field for prompt`);
       res.status(400).json({ error: 'Missing text field for prompt' });
       return;
     }
 
-    await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', ['prompt', text]);
+    try {
+      await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', ['prompt', text]);
+    } catch (error) {
+      console.error(`[${agentName}] Error: Failed to store prompt in database:`, error);
+      res.status(500).json({ error: 'Failed to store prompt in database' });
+      return;
+    }
 
-    const apiKeyRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['api_key']);
-    const modelRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['model']);
-    const instructionsRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']);
+    let apiKeyRecord, modelRecord, instructionsRecord;
+
+    try {
+      apiKeyRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['api_key']);
+      modelRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['model']);
+      instructionsRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']);
+    } catch (error) {
+      console.error(`[${agentName}] Error: Failed to retrieve configuration from database:`, error);
+      res.status(500).json({ error: 'Failed to retrieve configuration from database' });
+      return;
+    }
 
     const apiKey = apiKeyRecord?.value;
     const model = modelRecord?.value;
     const instructions = instructionsRecord?.value || '';
 
     if (!apiKey) {
+      console.error(`[${agentName}] Error: API key not set`);
       res.status(400).json({ error: 'API key not set' });
       return;
     }
     if (!model) {
+      console.error(`[${agentName}] Error: Model not set`);
       res.status(400).json({ error: 'Model not set' });
       return;
     }
@@ -86,11 +103,26 @@ export function createPromptHandler(
 
     console.log(`>>>> Sending request to ${agentName} - ${model}`);
     const startTime = Date.now();
-    const apiResponse = await processPrompt(apiKey, model, instructions);
-    const durationSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`<<<< Response received from ${agentName} - ${model} (took ${durationSeconds}s)`);
 
-    res.json(apiResponse);
+    try {
+      const apiResponse = await processPrompt(apiKey, model, instructions);
+      const durationSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.log(`<<<< Response received from ${agentName} - ${model} (took ${durationSeconds}s)`);
+      res.json(apiResponse);
+    } catch (error) {
+      const durationSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.error(`[${agentName}] Error: Request failed after ${durationSeconds}s:`, error);
+
+      if (error instanceof Error) {
+        console.error(`[${agentName}] Error message:`, error.message);
+        console.error(`[${agentName}] Error stack:`, error.stack);
+      }
+
+      res.status(500).json({
+        error: 'Failed to process prompt',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   };
 }
 

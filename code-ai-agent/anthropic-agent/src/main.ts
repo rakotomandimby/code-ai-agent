@@ -72,7 +72,7 @@ async function buildRequestBody(instructions: string): Promise<any> {
   const sanitizedInstructions = instructions.trim();
 
   return {
-    max_tokens: 32000,
+    max_tokens: 64000,
     system: sanitizedInstructions || undefined,
     messages,
   };

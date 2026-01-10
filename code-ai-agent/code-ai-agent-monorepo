@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export WORKDIR="/home/mihamina/Projects/code-ai-agent/code-ai-agent"
+export PATH="/usr/local/node/bin:${PATH}"
+export WORKDIR="/srv/shared/code-ai-agent/code-ai-agent"
 cd ${WORKDIR}
 npm install
 npx nx reset
