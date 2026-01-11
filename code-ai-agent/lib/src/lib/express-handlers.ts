@@ -33,8 +33,14 @@ export const handleConfig = async (req: Request, res: Response): Promise<void> =
     await db.resetDatabase();
   }
 
-  const { lastID } = await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', [dbKey, text]);
-  res.json({ message: `${type} stored successfully`, rowId: lastID });
+  try {
+    const { lastID } = await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', [dbKey, text]);
+    console.log(`[Agent] Successfully stored config: ${type}`);
+    res.json({ message: `${type} stored successfully`, rowId: lastID });
+  } catch (error) {
+    console.error(`[Agent] Failed to store config ${type}:`, error);
+    res.status(500).json({ error: `Failed to store ${type} in database` });
+  }
 };
 
 export const handleFile = async (req: Request, res: Response): Promise<void> => {
@@ -43,8 +49,15 @@ export const handleFile = async (req: Request, res: Response): Promise<void> => 
     res.status(400).json({ error: 'Missing filename or content for file' });
     return;
   }
-  const { lastID } = await db.run('INSERT INTO data (file_path, file_content) VALUES (?, ?)', [filename, content]);
-  res.json({ message: 'File data stored successfully', rowId: lastID });
+
+  try {
+    const { lastID } = await db.run('INSERT INTO data (file_path, file_content) VALUES (?, ?)', [filename, content]);
+    console.log(`[Agent] Successfully stored file: ${filename}`);
+    res.json({ message: 'File data stored successfully', rowId: lastID });
+  } catch (error) {
+    console.error(`[Agent] Failed to store file ${filename}:`, error);
+    res.status(500).json({ error: 'Failed to store file in database' });
+  }
 };
 
 export interface PromptHandler {
@@ -65,6 +78,7 @@ export function createPromptHandler(
 
     try {
       await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', ['prompt', text]);
+      console.log(`[${agentName}] Prompt stored. Proceeding to API call...`);
     } catch (error) {
       console.error(`[${agentName}] Error: Failed to store prompt in database:`, error);
       res.status(500).json({ error: 'Failed to store prompt in database' });

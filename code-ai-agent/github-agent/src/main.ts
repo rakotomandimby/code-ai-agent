@@ -85,7 +85,7 @@ async function buildRequestBody(instructions: string): Promise<any> {
 }
 
 function postToGithub(requestBody: any, apiKey: string, model: string): Promise<any> {
-  const url = 'https:///models.github.ai/inference/chat/completions';
+  const url = 'https://models.github.ai/inference/chat/completions';
 
   const body = { ...requestBody, model };
 
