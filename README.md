@@ -39,6 +39,11 @@ It shares a similar architecture with the other agents, utilizing an Express ser
 The agent is structured around a repository pattern that handles the storage and retrieval of conversation data, ensuring that interactions are contextually relevant. 
 The implementation includes a specialized HTTP client that abstracts the
 
+## GitHub Models Agent
+
+The GitHub Models agent, located in the [./github-agent/](./code-ai-agent/github-agent/) directory, is tailored to interact with GitHub Models' chat completions API.
+It reuses the shared Express-based architecture and database utilities to manage conversation context, building prompts from stored project files and relaying them to GitHub's inference endpoint through a dedicated HTTP client.
+
 # Installation
 
 Requirements:
