@@ -35,10 +35,10 @@ export const handleConfig = async (req: Request, res: Response): Promise<void> =
 
   try {
     const { lastID } = await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', [dbKey, text]);
-    console.log(`[Agent] Successfully stored config: ${type}`);
+    console.log(`    [Agent] Successfully stored config: ${type}`);
     res.json({ message: `${type} stored successfully`, rowId: lastID });
   } catch (error) {
-    console.error(`[Agent] Failed to store config ${type}:`, error);
+    console.error(`    [Agent] Failed to store config ${type}:`, error);
     res.status(500).json({ error: `Failed to store ${type} in database` });
   }
 };
@@ -52,10 +52,9 @@ export const handleFile = async (req: Request, res: Response): Promise<void> => 
 
   try {
     const { lastID } = await db.run('INSERT INTO data (file_path, file_content) VALUES (?, ?)', [filename, content]);
-    console.log(`[Agent] Successfully stored file: ${filename}`);
     res.json({ message: 'File data stored successfully', rowId: lastID });
   } catch (error) {
-    console.error(`[Agent] Failed to store file ${filename}:`, error);
+    console.error(`    [Agent] Failed to store file ${filename}:`, error);
     res.status(500).json({ error: 'Failed to store file in database' });
   }
 };
@@ -71,16 +70,16 @@ export function createPromptHandler(
   return async (req: Request, res: Response): Promise<void> => {
     const { text } = req.body as ConfigPayload;
     if (!text) {
-      console.error(`[${agentName}] Error: Missing text field for prompt`);
+      console.error(`    [${agentName}] Error: Missing text field for prompt`);
       res.status(400).json({ error: 'Missing text field for prompt' });
       return;
     }
 
     try {
       await db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', ['prompt', text]);
-      console.log(`[${agentName}] Prompt stored. Proceeding to API call...`);
+      console.log(`    [${agentName}] Prompt stored. Proceeding to API call...`);
     } catch (error) {
-      console.error(`[${agentName}] Error: Failed to store prompt in database:`, error);
+      console.error(`    [${agentName}] Error: Failed to store prompt in database:`, error);
       res.status(500).json({ error: 'Failed to store prompt in database' });
       return;
     }
@@ -92,7 +91,7 @@ export function createPromptHandler(
       modelRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['model']);
       instructionsRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['system_instructions']);
     } catch (error) {
-      console.error(`[${agentName}] Error: Failed to retrieve configuration from database:`, error);
+      console.error(`    [${agentName}] Error: Failed to retrieve configuration from database:`, error);
       res.status(500).json({ error: 'Failed to retrieve configuration from database' });
       return;
     }
@@ -102,12 +101,12 @@ export function createPromptHandler(
     const instructions = instructionsRecord?.value || '';
 
     if (!apiKey) {
-      console.error(`[${agentName}] Error: API key not set`);
+      console.error(`    [${agentName}] Error: API key not set`);
       res.status(400).json({ error: 'API key not set' });
       return;
     }
     if (!model) {
-      console.error(`[${agentName}] Error: Model not set`);
+      console.error(`    [${agentName}] Error: Model not set`);
       res.status(400).json({ error: 'Model not set' });
       return;
     }
