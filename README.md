@@ -18,7 +18,7 @@ ensuring a robust and efficient development environment.
 
 ## OpenAI ChatGPT Agent
 
-The ChatGPT agent, located in the [./openai-agent/](./code-ai-agent/openai-agent/) directory, is designed to interact with OpenAI's ChatGPT model.
+The ChatGPT agent, located in the [code-ai-agent/openai-agent/](./code-ai-agent/openai-agent/) directory of the monorepo, is designed to interact with OpenAI's ChatGPT model.
 It utilizes an Express server to handle HTTP requests and responses, allowing users to send messages and receive AI-generated responses. 
 The agent is built around a repository pattern that manages the storage and retrieval of conversation data, ensuring that interactions are contextually aware. 
 The implementation includes a dedicated HTTP client that abstracts the complexities of API communication, making it easier to integrate and extend the functionality of the ChatGPT agent.
@@ -27,21 +27,21 @@ The implementation includes a dedicated HTTP client that abstracts the complexit
 
 ## GoogleAI Gemini Agent
 
-The Gemini agent, found in the [./googleai-agent/](./code-ai-agent/googleai-agent/) directory, serves a similar purpose but is tailored to interact with Google's Gemini model. 
+The Gemini agent, found in the [code-ai-agent/googleai-agent/](./code-ai-agent/googleai-agent/) directory of the monorepo, serves a similar purpose but is tailored to interact with Google's Gemini model. 
 Like the ChatGPT agent, it is built on an Express framework and follows a modular architecture that promotes code reuse and separation of concerns. 
 The Gemini agent also employs a repository pattern for managing conversation history and settings, ensuring that user interactions are preserved across sessions. 
 The agent's HTTP client is specifically configured to communicate with the Gemini API, providing a seamless experience for users looking to leverage the capabilities of this advanced AI model.
 
 ## Anthropic Claude Agent
 
-The Anthropic agent, located in the [./anthropic-agent/](./code-ai-agent/anthropic-agent/) directory, is designed to interface with Anthropic's Claude model.
+The Anthropic agent, located in the [code-ai-agent/anthropic-agent/](./code-ai-agent/anthropic-agent/) directory of the monorepo, is designed to interface with Anthropic's Claude model.
 It shares a similar architecture with the other agents, utilizing an Express server to manage HTTP requests and responses. 
 The agent is structured around a repository pattern that handles the storage and retrieval of conversation data, ensuring that interactions are contextually relevant. 
-The implementation includes a specialized HTTP client that abstracts the
+The implementation includes a specialized HTTP client that abstracts the communication with Claude's API for reliable integration.
 
 ## GitHub Models Agent
 
-The GitHub Models agent, located in the [./github-agent/](./code-ai-agent/github-agent/) directory, is tailored to interact with GitHub Models' chat completions API.
+The GitHub Models agent, located in the [code-ai-agent/github-agent/](./code-ai-agent/github-agent/) directory of the monorepo, is tailored to interact with GitHub Models' chat completions API.
 It reuses the shared Express-based architecture and database utilities to manage conversation context, building prompts from stored project files and relaying them to GitHub's inference endpoint through a dedicated HTTP client.
 
 # Installation
