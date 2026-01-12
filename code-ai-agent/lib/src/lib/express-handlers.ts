@@ -52,6 +52,7 @@ export const handleFile = async (req: Request, res: Response): Promise<void> => 
 
   try {
     const { lastID } = await db.run('INSERT INTO data (file_path, file_content) VALUES (?, ?)', [filename, content]);
+    console.log(`    [Agent] Successfully stored file: ${filename} (ID: ${lastID})`);
     res.json({ message: 'File data stored successfully', rowId: lastID });
   } catch (error) {
     console.error(`    [Agent] Failed to store file ${filename}:`, error);
