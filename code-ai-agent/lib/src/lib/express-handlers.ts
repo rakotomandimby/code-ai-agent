@@ -112,9 +112,6 @@ export function createPromptHandler(
       return;
     }
 
-    console.log(`>>>> Waiting a bit before sending the request to ${agentName} - ${model}`);
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
     console.log(`>>>> Sending request to ${agentName} - ${model}`);
     const startTime = Date.now();
 
