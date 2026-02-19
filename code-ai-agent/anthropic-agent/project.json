@@ -72,7 +72,8 @@
       },
       "configurations": {
         "development": {
-          "buildTarget": "anthropic-agent:build:development"
+          "buildTarget": "anthropic-agent:build:development",
+          "inspect": false
         },
         "production": {
           "buildTarget": "anthropic-agent:build:production"

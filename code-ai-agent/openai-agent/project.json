@@ -72,7 +72,8 @@
       },
       "configurations": {
         "development": {
-          "buildTarget": "openai-agent:build:development"
+          "buildTarget": "openai-agent:build:development",
+          "inspect": false
         },
         "production": {
           "buildTarget": "openai-agent:build:production"

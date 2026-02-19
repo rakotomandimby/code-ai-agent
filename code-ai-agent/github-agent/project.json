@@ -72,7 +72,8 @@
       },
       "configurations": {
         "development": {
-          "buildTarget": "github-agent:build:development"
+          "buildTarget": "github-agent:build:development",
+          "inspect": false
         },
         "production": {
           "buildTarget": "github-agent:build:production"

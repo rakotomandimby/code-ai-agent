@@ -72,7 +72,8 @@
       },
       "configurations": {
         "development": {
-          "buildTarget": "googleai-agent:build:development"
+          "buildTarget": "googleai-agent:build:development",
+          "inspect": false
         },
         "production": {
           "buildTarget": "googleai-agent:build:production"
