@@ -17,30 +17,31 @@ setDbStore({
 });
 
 type DataEntry = { file_path: string; file_content: string };
-type Content = { role: 'user' | 'model'; parts: Array<{ text: string }> };
+type Step = { type: 'user_input' | 'model_output'; content: Array<{ type: 'text'; text: string }> };
 
 // --- API Interaction ---
-async function buildRequestBody(instructions: string): Promise<any> {
+async function buildRequestBody(instructions: string, model: string): Promise<any> {
   const promptRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['prompt']);
   const prompt = promptRecord?.value?.trim() ?? '';
   const dataEntries = await db.all<DataEntry>('SELECT file_path, file_content FROM data ORDER BY id ASC');
 
-  const contents: Content[] = [];
+  const input: Step[] = [];
 
-  contents.push({
-    role: 'user',
-    parts: [{ text: 'I need your help on this project.' }],
+  input.push({
+    type: 'user_input',
+    content: [{ type: 'text', text: 'I need your help on this project.' }],
   });
 
   for (const entry of dataEntries) {
-    contents.push({
-      role: 'model',
-      parts: [{ text: `Please provide the content of the \`${entry.file_path}\` file.` }],
+    input.push({
+      type: 'model_output',
+      content: [{ type: 'text', text: `Please provide the content of the \`${entry.file_path}\` file.` }],
     });
-    contents.push({
-      role: 'user',
-      parts: [
+    input.push({
+      type: 'user_input',
+      content: [
         {
+          type: 'text',
           text: `Here is the content of the \`${entry.file_path}\` file:\n\`\`\`\n${entry.file_content}\n\`\`\`\n`,
         },
       ],
@@ -48,87 +49,83 @@ async function buildRequestBody(instructions: string): Promise<any> {
   }
 
   if (!dataEntries.length && !prompt) {
-    contents.push({
-      role: 'model',
-      parts: [{ text: 'How would you like to proceed with this project?' }],
+    input.push({
+      type: 'model_output',
+      content: [{ type: 'text', text: 'How would you like to proceed with this project?' }],
     });
   }
 
   if (prompt) {
-    contents.push({
-      role: 'model',
-      parts: [{ text: 'What would you like to do next?' }],
+    input.push({
+      type: 'model_output',
+      content: [{ type: 'text', text: 'What would you like to do next?' }],
     });
-    contents.push({
-      role: 'user',
-      parts: [{ text: prompt }],
+    input.push({
+      type: 'user_input',
+      content: [{ type: 'text', text: prompt }],
     });
   }
 
-  const lastMessage = contents[contents.length - 1];
-  if (!lastMessage || lastMessage.role !== 'user') {
-    contents.push({
-      role: 'user',
-      parts: [{ text: 'Please let me know how you would like to proceed.' }],
+  const lastMessage = input[input.length - 1];
+  if (!lastMessage || lastMessage.type !== 'user_input') {
+    input.push({
+      type: 'user_input',
+      content: [{ type: 'text', text: 'Please let me know how you would like to proceed.' }],
     });
   }
 
   const requestBody: any = {
-    contents,
-    generationConfig: {
+    model,
+    input,
+    generation_config: {
       temperature: 0.7,
-      topP: 0.9,
-      topK: 1,
+      top_p: 0.9,
+      top_k: 1,
     },
   };
 
   const sanitizedInstructions = instructions.trim();
   if (sanitizedInstructions) {
-    requestBody.system_instruction = {
-      role: 'system',
-      parts: [{ text: sanitizedInstructions }],
-    };
+    requestBody.system_instruction = sanitizedInstructions;
   }
 
   return requestBody;
 }
 
-function postToGoogleAI(requestBody: any, apiKey: string, model: string): Promise<any> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+function postToGoogleAI(requestBody: any, apiKey: string): Promise<any> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/interactions`;
   return axios.post(url, requestBody, {
     headers: {
       'Content-Type': 'application/json',
       'x-goog-api-key': apiKey,
+      'Api-Revision': '2026-05-20',
     },
   });
 }
 
 function createErrorResponse(errorMessage: string): any {
   return {
-    candidates: [
+    steps: [
       {
-        content: {
-          parts: [
-            {
-              text: errorMessage,
-            },
-          ],
-          role: 'model',
-        },
+        type: 'model_output',
+        content: [
+          {
+            type: 'text',
+            text: errorMessage,
+          },
+        ],
       },
     ],
-    usageMetadata: {
-      promptTokenCount: 0,
-      candidatesTokenCount: 0,
-      totalTokenCount: 0,
+    usage: {
+      total_tokens: 0,
     },
   };
 }
 
 async function processPrompt(apiKey: string, model: string, instructions: string): Promise<any> {
   try {
-    const requestBody = await buildRequestBody(instructions);
-    const apiResponse = await postToGoogleAI(requestBody, apiKey, model);
+    const requestBody = await buildRequestBody(instructions, model);
+    const apiResponse = await postToGoogleAI(requestBody, apiKey);
     return apiResponse.data;
   } catch (error) {
     let errorMessage = 'An unknown error occurred while processing your request.';
@@ -154,4 +151,3 @@ const handlePrompt = createPromptHandler(processPrompt, 'GoogleAI');
 const app = createApp(handlePrompt, 'GoogleAI');
 
 startServer(app, port, db.removeDatabaseFile);
-
