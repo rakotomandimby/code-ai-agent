@@ -79,8 +79,7 @@ async function buildRequestBody(instructions: string, model: string): Promise<an
     input,
     generation_config: {
       temperature: 0.7,
-      top_p: 0.9,
-      top_k: 1,
+      top_p: 0.9
     },
   };
 
