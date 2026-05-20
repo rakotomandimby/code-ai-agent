@@ -83,6 +83,12 @@ async function buildRequestBody(instructions: string, model: string): Promise<an
     },
   };
 
+  if (model === 'gemini-3.5-flash') {
+    requestBody.generation_config.thinkingConfig = {
+      thinkingLevel: 'HIGH'
+    };
+  }
+
   const sanitizedInstructions = instructions.trim();
   if (sanitizedInstructions) {
     requestBody.system_instruction = sanitizedInstructions;
@@ -150,3 +156,4 @@ const handlePrompt = createPromptHandler(processPrompt, 'GoogleAI');
 const app = createApp(handlePrompt, 'GoogleAI');
 
 startServer(app, port, db.removeDatabaseFile);
+
