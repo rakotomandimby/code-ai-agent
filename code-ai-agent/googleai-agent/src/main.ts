@@ -84,7 +84,7 @@ async function buildRequestBody(instructions: string, model: string): Promise<an
   };
 
   if (model === 'gemini-3.5-flash') {
-    requestBody.generation_config.thinkingConfig = {
+    requestBody.generation_config.thinking_config = {
       thinkingLevel: 'HIGH'
     };
   }
