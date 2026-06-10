@@ -1,11 +1,6 @@
 # LLM API Integration Documentation
 
-This document describes, at wire-format level, how the project uses the LLM APIs in:
-
-- `code-ai-agent/googleai-agent/src/main.ts`
-- `code-ai-agent/openai-agent/src/main.ts`
-
-It is based on the implementation, not on an abstract design. The focus is:
+This document reflects the current implementation. It focuses on:
 
 1. How request payloads are built.
 2. Which HTTP endpoints and headers are used.
@@ -16,6 +11,8 @@ It is based on the implementation, not on an abstract design. The focus is:
 
 ## 1. Shared architecture
 
+### 1.1 High-level flow
+
 Both agents follow the same high-level flow:
 
 1. The HTTP layer stores incoming configuration and prompt data in SQLite.
@@ -25,63 +22,36 @@ Both agents follow the same high-level flow:
 5. On success, the raw provider response body (`response.data`) is returned as-is.
 6. On failure, the agent returns a provider-shaped synthetic error payload.
 
-### 1.1 SQLite data sources
-
-Both agents use the same database schema from `@code-ai-agent/lib`.
-
-```sql
-CREATE TABLE IF NOT EXISTS config (
-  key TEXT PRIMARY KEY,
-  value TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS data (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  file_path TEXT NOT NULL,
-  file_content TEXT NOT NULL
-);
-```
-
-### 1.2 Configuration keys used by both agents
+### 1.2 Shared configuration keys
 
 | `config.key` | Meaning | Used in upstream API call |
 | --- | --- | --- |
 | `api_key` | Provider API credential | HTTP auth header |
 | `model` | Model identifier | Top-level `model` request field |
-| `system_instructions` | System prompt / instruction block | `instructions` for OpenAI, `system_instruction` for Google AI |
+| `system_instructions` | System prompt or instruction block | `instructions` for OpenAI, `system_instruction` for Google AI |
 | `prompt` | Latest user request | Appended to the synthetic conversation |
 
-### 1.3 File context loading
+### 1.3 Synthetic conversation algorithm
 
-Both agents load project files with:
-
-```sql
-SELECT file_path, file_content FROM data ORDER BY id ASC
-```
-
-That means file context is replayed in insertion order.
-
-### 1.4 Synthetic conversation algorithm
-
-Both agents construct a synthetic back-and-forth conversation instead of sending the stored files as a single blob.
+Both agents construct a synthetic back-and-forth conversation instead of sending the stored files as one blob.
 
 The sequence is:
 
 1. Always start with a user message: `"I need your help on this project."`
 2. For each stored file:
-   1. Add an assistant/model turn asking for that file.
+   1. Add an assistant or model turn asking for that file.
    2. Add a user turn containing the file content wrapped in triple backticks.
 3. If there are no files and no prompt:
-   1. Add an assistant/model turn asking how to proceed.
+   1. Add an assistant or model turn asking how to proceed.
 4. If a prompt exists:
-   1. Add an assistant/model turn asking what to do next.
+   1. Add an assistant or model turn asking what to do next.
    2. Add a user turn containing the prompt text.
 5. If the last turn is not a user turn, append:
    1. `"Please let me know how you would like to proceed."`
 
 This guarantees that the final turn sent upstream is always a user turn.
 
-### 1.5 Example reconstructed logical conversation
+### 1.4 Example reconstructed logical conversation
 
 Given:
 
@@ -114,8 +84,6 @@ The exact JSON encoding of that conversation differs between OpenAI and Google A
 
 ## 2. OpenAI agent
 
-Source: `code-ai-agent/openai-agent/src/main.ts`
-
 ### 2.1 Endpoint and transport
 
 - **HTTP method:** `POST`
@@ -130,28 +98,7 @@ Authorization: Bearer <api_key>
 
 ### 2.2 Request construction
 
-`buildRequestBody()` builds the base payload, then `postToOpenAI(...)` injects:
-
-- `model`
-- optional `instructions`
-
-### 2.2.1 Exact request shape produced by the code
-
-```ts
-type OpenAIConversationMessage = {
-  role: 'user' | 'assistant';
-  content: string;
-};
-
-type OpenAIRequest = {
-  input: OpenAIConversationMessage[];
-  max_output_tokens: number; // always 98304
-  model: string;
-  instructions?: string; // only if trimmed string is non-empty
-};
-```
-
-### 2.2.2 Important implementation details
+#### 2.2.1 Important implementation details
 
 - `max_output_tokens` is always `1024 * 96 = 98304`.
 - No `temperature` is sent.
@@ -160,7 +107,7 @@ type OpenAIRequest = {
 - The code uses plain string `content`, not typed multimodal content items.
 - `instructions` is omitted if `system_instructions.trim()` is empty.
 
-### 2.2.3 Example request body
+#### 2.2.2 Example request body
 
 Representative payload produced by the current code:
 
@@ -202,7 +149,7 @@ Representative payload produced by the current code:
 }
 ```
 
-### 2.3 Semantics of OpenAI fields
+#### 2.2.3 Semantics of OpenAI fields
 
 | Field | Value source | Notes |
 | --- | --- | --- |
@@ -211,18 +158,13 @@ Representative payload produced by the current code:
 | `input` | Reconstructed from `config.prompt` + `data` rows | Ordered sequence of text-only turns |
 | `max_output_tokens` | hard-coded | Always `98304` |
 
-### 2.4 Response handling
+### 2.3 Response handling
 
-On success, the agent does **no response normalization**:
+On success, the agent does no response normalization.
 
-```ts
-const apiResponse = await postToOpenAI(...);
-return apiResponse.data;
-```
+The HTTP response returned by this agent is the raw JSON body from `POST /v1/responses`.
 
-So the HTTP response returned by this agent is the raw JSON body from `POST /v1/responses`.
-
-### 2.4.1 Representative success response shape
+#### 2.3.1 Representative success response shape
 
 The code does not constrain the upstream body, but the downstream consumer should expect an OpenAI Responses-style payload with at least:
 
@@ -252,7 +194,7 @@ The code does not constrain the upstream body, but the downstream consumer shoul
 }
 ```
 
-### 2.4.2 Output extraction pattern
+#### 2.3.2 Output extraction pattern
 
 The most relevant assistant text is typically found under:
 
@@ -266,9 +208,9 @@ More generally:
 output[*].content[*]
 ```
 
-where content items may be typed objects such as `output_text`.
+Content items may be typed objects such as `output_text`.
 
-### 2.5 Synthetic error response format
+### 2.4 Synthetic error response format
 
 If the upstream call fails, the OpenAI agent returns a synthetic object shaped like an OpenAI Responses payload:
 
@@ -296,7 +238,7 @@ If the upstream call fails, the OpenAI agent returns a synthetic object shaped l
 }
 ```
 
-### 2.5.1 Error text generation rules
+#### 2.4.1 Error text generation rules
 
 The error string is built as follows:
 
@@ -315,8 +257,6 @@ The error string is built as follows:
 
 ## 3. Google AI agent
 
-Source: `code-ai-agent/googleai-agent/src/main.ts`
-
 ### 3.1 Endpoint and transport
 
 - **HTTP method:** `POST`
@@ -334,32 +274,7 @@ The `Api-Revision: 2026-05-20` header is important because the code is built aga
 
 ### 3.2 Request construction
 
-`buildRequestBody(instructions, model)` creates the full payload before transmission.
-
-### 3.2.1 Exact request shape produced by the code
-
-```ts
-type GoogleAIStep = {
-  type: 'user_input' | 'model_output';
-  content: Array<{
-    type: 'text';
-    text: string;
-  }>;
-};
-
-type GoogleAIRequest = {
-  model: string;
-  input: GoogleAIStep[];
-  generation_config: {
-    temperature: number; // always 0.7
-    top_p: number;       // always 0.9
-    thinking_level?: 'high'; // only for gemini-3.5-flash
-  };
-  system_instruction?: string; // only if trimmed string is non-empty
-};
-```
-
-### 3.2.2 Important implementation details
+#### 3.2.1 Important implementation details
 
 - `generation_config.temperature` is always `0.7`.
 - `generation_config.top_p` is always `0.9`.
@@ -379,9 +294,9 @@ is added in addition to `temperature` and `top_p`.
 - No streaming is used.
 - All content items are text-only:
   - `content: [{ "type": "text", "text": "..." }]`
-- `system_instruction` is omitted if `instructions.trim()` is empty.
+- `system_instruction` is omitted if `system_instructions.trim()` is empty.
 
-### 3.2.3 Example request body
+#### 3.2.2 Example request body
 
 Representative payload produced by the current code:
 
@@ -444,7 +359,7 @@ Representative payload produced by the current code:
 }
 ```
 
-### 3.3 Semantics of Google AI fields
+#### 3.2.3 Semantics of Google AI fields
 
 | Field | Value source | Notes |
 | --- | --- | --- |
@@ -455,18 +370,13 @@ Representative payload produced by the current code:
 | `generation_config.top_p` | hard-coded | Always `0.9` |
 | `generation_config.thinking_level` | derived from model name | Present only for `gemini-3.5-flash` |
 
-### 3.4 Response handling
+### 3.3 Response handling
 
-On success, the agent does **no response normalization**:
+On success, the agent does no response normalization.
 
-```ts
-const apiResponse = await postToGoogleAI(...);
-return apiResponse.data;
-```
+The HTTP response returned by this agent is the raw JSON body from `POST /v1beta/interactions`.
 
-So the HTTP response returned by this agent is the raw JSON body from `POST /v1beta/interactions`.
-
-### 3.4.1 Representative success response shape
+#### 3.3.1 Representative success response shape
 
 Because the request opts into the post-`2026-05-20` schema, the important response container is `steps`, not legacy `outputs`.
 
@@ -493,7 +403,7 @@ Representative downstream payload:
 }
 ```
 
-### 3.4.2 Output extraction pattern
+#### 3.3.2 Output extraction pattern
 
 The most relevant assistant text is typically found under:
 
@@ -507,14 +417,14 @@ More generally:
 steps[*]
 ```
 
-where each step has a discriminating `type`, and model text is carried by:
+Each step has a discriminating `type`, and model text is carried by:
 
 ```text
 step.type === "model_output"
 step.content[*].type === "text"
 ```
 
-### 3.5 Synthetic error response format
+### 3.4 Synthetic error response format
 
 If the upstream call fails, the Google AI agent returns a synthetic object shaped around the same `steps` concept:
 
@@ -537,7 +447,7 @@ If the upstream call fails, the Google AI agent returns a synthetic object shape
 }
 ```
 
-### 3.5.1 Error text generation rules
+#### 3.4.1 Error text generation rules
 
 The error string is built identically to the OpenAI agent:
 
@@ -576,28 +486,11 @@ The error string is built identically to the OpenAI agent:
 
 ## 5. Behavioral conclusions from the code
 
-1. These agents are **stateless at provider level but stateful locally**: context is reconstructed from SQLite on every prompt.
-2. The project does **not** send uploaded files as native provider file objects; it inlines file contents into text prompts.
-3. The project does **not** use tool calling, streaming, or structured output in these two agents.
-4. The project returns **raw upstream success payloads**, so downstream consumers must understand provider-native schemas.
-5. The project emits **synthetic fallback payloads** that mimic the provider response family closely enough for downstream consumers to treat errors as model text.
+1. These agents are stateless at provider level but stateful locally: context is reconstructed from SQLite on every prompt.
+2. The project does not send uploaded files as native provider file objects; it inlines file contents into text prompts.
+3. The project does not use tool calling, streaming, or structured output in these two agents.
+4. The project returns raw upstream success payloads, so downstream consumers must understand provider-native schemas.
+5. The project emits synthetic fallback payloads that mimic the provider response family closely enough for downstream consumers to treat errors as model text.
+```
 
----
 
-## 6. Minimal implementation references
-
-- OpenAI request builder:
-  - `code-ai-agent/openai-agent/src/main.ts`
-  - `buildRequestBody()`
-  - `postToOpenAI()`
-  - `createErrorResponse()`
-
-- Google AI request builder:
-  - `code-ai-agent/googleai-agent/src/main.ts`
-  - `buildRequestBody(instructions, model)`
-  - `postToGoogleAI()`
-  - `createErrorResponse()`
-
-- Shared HTTP/database orchestration:
-  - `code-ai-agent/lib/src/lib/express-handlers.ts`
-  - `code-ai-agent/lib/src/lib/db.ts`
