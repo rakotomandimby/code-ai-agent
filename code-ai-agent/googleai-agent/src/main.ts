@@ -83,9 +83,8 @@ async function buildRequestBody(instructions: string, model: string): Promise<an
     },
   };
 
-  if (model === 'gemini-3.5-flash') {
-    requestBody.generation_config.thinking_level = 'high';
-  }
+  if (model === 'gemini-3.5-flash') { requestBody.generation_config.thinking_level = 'high'; }
+  if (model === 'gemini-3.6-flash') { requestBody.generation_config.thinking_level = 'high'; }
 
   const sanitizedInstructions = instructions.trim();
   if (sanitizedInstructions) {
