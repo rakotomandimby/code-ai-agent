@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "express": "^4.22.2",
-    "js-yaml": "^5.2.2",
+    "js-yaml": "^4.*",
     "sqlite3": "^5.1.7",
     "tmp": "^0.2.7"
   }
