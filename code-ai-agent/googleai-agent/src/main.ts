@@ -82,9 +82,27 @@ async function buildRequestBody(instructions: string, model: string): Promise<an
       top_p: 0.9
     },
   };
+  // Thinking levels are:
+  // - minimal : Matches the "no thinking" setting for most queries. Note, minimal does not guarantee that thinking is off, the model may reason very minimally for complex tasks.
+  // - low : Minimizes latency and cost.
+  // - medium : Balanced thinking for most tasks.
+  // - high : Maximizes reasoning depth. The model may take significantly longer to reach a first (non thinking) output token, but the output will be more carefully reasoned.
+  // Documentation is: https://ai.google.dev/gemini-api/docs/generate-content/thinking#levels-budgets
 
-  if (model === 'gemini-3.5-flash') { requestBody.generation_config.thinking_level = 'high'; }
-  if (model === 'gemini-3.6-flash') { requestBody.generation_config.thinking_level = 'high'; }
+  if (model === 'gemini-3.5-flash-minimal') { requestBody.model = 'gemini-3.5-flash'; requestBody.generation_config.thinking_level = 'minimal'; }
+  if (model === 'gemini-3.6-flash-minimal') { requestBody.model = 'gemini-3.6-flash'; requestBody.generation_config.thinking_level = 'minimal'; }
+
+  if (model === 'gemini-3.5-flash-low') { requestBody.model = 'gemini-3.5-flash'; requestBody.generation_config.thinking_level = 'low'; }
+  if (model === 'gemini-3.6-flash-low') { requestBody.model = 'gemini-3.6-flash'; requestBody.generation_config.thinking_level = 'low'; }
+
+  if (model === 'gemini-3.5-flash-medium') { requestBody.model = 'gemini-3.5-flash'; requestBody.generation_config.thinking_level = 'medium'; }
+  if (model === 'gemini-3.6-flash-medium') { requestBody.model = 'gemini-3.6-flash'; requestBody.generation_config.thinking_level = 'medium'; }
+
+  if (model === 'gemini-3.5-flash-high') { requestBody.model = 'gemini-3.5-flash'; requestBody.generation_config.thinking_level = 'high'; }
+  if (model === 'gemini-3.6-flash-high') { requestBody.model = 'gemini-3.6-flash'; requestBody.generation_config.thinking_level = 'high'; }
+
+  if (model === 'gemini-3.5-flash') { requestBody.generation_config.thinking_level = 'low'; }
+  if (model === 'gemini-3.6-flash') { requestBody.generation_config.thinking_level = 'low'; }
 
   const sanitizedInstructions = instructions.trim();
   if (sanitizedInstructions) {
