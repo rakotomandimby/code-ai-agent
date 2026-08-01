@@ -39,11 +39,6 @@ It shares a similar architecture with the other agents, utilizing an Express ser
 The agent is structured around a repository pattern that handles the storage and retrieval of conversation data, ensuring that interactions are contextually relevant. 
 The implementation includes a specialized HTTP client that abstracts the communication with Claude's API for reliable integration.
 
-## GitHub Models Agent
-
-The GitHub Models agent, located in the [code-ai-agent/github-agent/](./code-ai-agent/github-agent/) directory of the monorepo, is tailored to interact with GitHub Models' chat completions API.
-It reuses the shared Express-based architecture and database utilities to manage conversation context, building prompts from stored project files and relaying them to GitHub's inference endpoint through a dedicated HTTP client.
-
 # Installation
 
 Requirements:
@@ -58,23 +53,21 @@ npx nx reset \
 && npx nx build lib \
 && npx nx build googleai-agent \
 && npx nx build anthropic-agent \
-&& npx nx build openai-agent \
-&& npx nx build github-agent
+&& npx nx build openai-agent
 ```
 
 ```bash
 npx nx serve googleai-agent
 npx nx serve anthropic-agent
-npx nx serve openai-agent \
-npx nx serve github-agent
+npx nx serve openai-agent
 ```
 
 Or, leverage Nx parallelism to build and serve all projects:
 
 ```bash
 npx nx reset
-npx nx run-many --target=build --projects=lib,googleai-agent,anthropic-agent,openai-agent,github-agent
-npx nx run-many --target=serve --projects=googleai-agent,anthropic-agent,openai-agent,github-agent
+npx nx run-many --target=build --projects=lib,googleai-agent,anthropic-agent,openai-agent
+npx nx run-many --target=serve --projects=googleai-agent,anthropic-agent,openai-agent
 ```
 # How did I create the workspaces
 
@@ -92,7 +85,6 @@ npx nx generate @nx/node:library lib
 npx nx generate @nx/node:application googleai-agent
 npx nx generate @nx/node:application anthropic-agent
 npx nx generate @nx/node:application openai-agent
-npx nx generate @nx/node:application github-agent
 ```
 
 ```bash

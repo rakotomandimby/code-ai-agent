@@ -22,5 +22,5 @@ cd ${WORKDIR}
 
 npm install
 npx nx reset
-npx nx run-many --target=build --projects=lib,googleai-agent,anthropic-agent,openai-agent,github-agent
-npx nx run-many --target=serve --projects=googleai-agent,anthropic-agent,openai-agent,github-agent
+npx nx run-many --target=build --projects=lib,googleai-agent,anthropic-agent,openai-agent
+npx nx run-many --target=serve --projects=googleai-agent,anthropic-agent,openai-agent
