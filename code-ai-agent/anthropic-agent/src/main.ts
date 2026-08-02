@@ -120,9 +120,32 @@ async function processPrompt(apiKey: string, model: string, instructions: string
   try {
     const requestBody = await buildRequestBody(instructions);
     const apiResponse = await postToAnthropic(requestBody, apiKey, model);
-    // log a pretty-printed version of the response data
-    console.log('#### Anthropic API response:', JSON.stringify(apiResponse.data, null, 2));
-    return apiResponse.data;
+
+    const data = apiResponse.data;
+    if (data && Array.isArray(data.content)) {
+      const textBlocks = data.content.filter(
+        (block: any) => block && block.type === 'text' && typeof block.text === 'string'
+      );
+
+      if (textBlocks.length > 0) {
+        const combinedText = textBlocks.map((b: any) => b.text).join('\n\n');
+        data.content = [
+          {
+            type: 'text',
+            text: combinedText,
+          },
+        ];
+      } else {
+        data.content = [
+          {
+            type: 'text',
+            text: '',
+          },
+        ];
+      }
+    }
+
+    return data;
   } catch (error) {
     let errorMessage = 'An unknown error occurred while processing your request.';
 
@@ -147,4 +170,3 @@ const handlePrompt = createPromptHandler(processPrompt, 'Anthropic');
 const app = createApp(handlePrompt, 'Anthropic');
 
 startServer(app, port, db.removeDatabaseFile);
-
