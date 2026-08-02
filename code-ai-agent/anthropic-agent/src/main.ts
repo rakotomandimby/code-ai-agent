@@ -80,7 +80,7 @@ async function buildRequestBody(instructions: string): Promise<any> {
 
 function postToAnthropic(requestBody: any, apiKey: string, model: string): Promise<any> {
   const url = 'https://api.anthropic.com/v1/messages';
-  const headers = model.startsWith('claude-sonnet-4')
+  const headers = model.startsWith('claude-sonnet')
     ? {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
@@ -120,6 +120,8 @@ async function processPrompt(apiKey: string, model: string, instructions: string
   try {
     const requestBody = await buildRequestBody(instructions);
     const apiResponse = await postToAnthropic(requestBody, apiKey, model);
+    // log a pretty-printed version of the response data
+    console.log('#### Anthropic API response:', JSON.stringify(apiResponse.data, null, 2));
     return apiResponse.data;
   } catch (error) {
     let errorMessage = 'An unknown error occurred while processing your request.';
