@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import * as db from './db';
 import {
   setDbStore,
@@ -22,7 +22,39 @@ setDbStore({
   removeDatabaseFile: db.removeDatabaseFile,
 });
 
-async function buildRequestBody(): Promise<any> {
+export interface OpenAIInputMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface OpenAIRequestBody {
+  model?: string;
+  input: OpenAIInputMessage[];
+  max_output_tokens: number;
+  instructions?: string;
+}
+
+export interface OpenAIOutputItem {
+  type: string;
+  role: string;
+  content: Array<{
+    type: string;
+    text: string;
+    annotations?: unknown[];
+  }>;
+}
+
+export interface OpenAIResponse {
+  model: string;
+  output: OpenAIOutputItem[];
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  };
+}
+
+async function buildRequestBody(): Promise<OpenAIRequestBody> {
   const conversationMessages = await buildConversationMessages();
 
   return {
@@ -34,12 +66,16 @@ async function buildRequestBody(): Promise<any> {
   };
 }
 
-function postToOpenAI(requestBody: any, apiKey: string, model: string): Promise<any> {
+function postToOpenAI(
+  requestBody: OpenAIRequestBody,
+  apiKey: string,
+  model: string
+): Promise<AxiosResponse<OpenAIResponse>> {
   const url = 'https://api.openai.com/v1/responses';
 
   requestBody.model = model;
 
-  return axios.post(url, requestBody, {
+  return axios.post<OpenAIResponse>(url, requestBody, {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
@@ -47,7 +83,7 @@ function postToOpenAI(requestBody: any, apiKey: string, model: string): Promise<
   });
 }
 
-function createErrorResponse(errorMessage: string, model: string): any {
+function createErrorResponse(errorMessage: string, model: string): OpenAIResponse {
   return {
     model: model,
     output: [
@@ -71,7 +107,7 @@ function createErrorResponse(errorMessage: string, model: string): any {
   };
 }
 
-async function prepareAndPostToOpenAI(requestBody: any, apiKey: string, model: string) {
+async function prepareAndPostToOpenAI(requestBody: OpenAIRequestBody, apiKey: string, model: string) {
   return postToOpenAI(requestBody, apiKey, model);
 }
 

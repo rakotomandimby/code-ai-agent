@@ -64,8 +64,8 @@ export interface PromptHandler {
   (req: Request, res: Response): Promise<void>;
 }
 
-export function createPromptHandler(
-  processPrompt: (apiKey: string, model: string, instructions: string) => Promise<any>,
+export function createPromptHandler<T = unknown>(
+  processPrompt: (apiKey: string, model: string, instructions: string) => Promise<T>,
   agentName = 'Agent'
 ): PromptHandler {
   return async (req: Request, res: Response): Promise<void> => {
@@ -85,7 +85,9 @@ export function createPromptHandler(
       return;
     }
 
-    let apiKeyRecord, modelRecord, instructionsRecord;
+    let apiKeyRecord: { value: string } | null;
+    let modelRecord: { value: string } | null;
+    let instructionsRecord: { value: string } | null;
 
     try {
       apiKeyRecord = await db.get<{ value: string }>('SELECT value FROM config WHERE key = ?', ['api_key']);

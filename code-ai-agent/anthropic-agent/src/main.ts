@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import * as db from './db';
 import {
   setDbStore,
@@ -7,6 +7,7 @@ import {
   startServer,
   buildConversationMessages,
   createGenericProcessPrompt,
+  ConversationStep,
 } from '@code-ai-agent/lib';
 
 const port = process.env.PORT ? Number(process.env.PORT) : 6010;
@@ -22,7 +23,32 @@ setDbStore({
   removeDatabaseFile: db.removeDatabaseFile,
 });
 
-async function buildRequestBody(instructions: string): Promise<any> {
+export interface ContentBlock {
+  type: string;
+  text?: string;
+  [key: string]: unknown;
+}
+
+export interface AnthropicRequestBody {
+  max_tokens: number;
+  system?: string;
+  messages: ConversationStep[];
+  model?: string;
+}
+
+export interface AnthropicResponse {
+  content: ContentBlock[];
+  model: string;
+  role: string;
+  stop_reason: string;
+  type: string;
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+}
+
+async function buildRequestBody(instructions: string): Promise<AnthropicRequestBody> {
   const messages = await buildConversationMessages();
   const sanitizedInstructions = instructions.trim();
 
@@ -33,7 +59,11 @@ async function buildRequestBody(instructions: string): Promise<any> {
   };
 }
 
-function postToAnthropic(requestBody: any, apiKey: string, model: string): Promise<any> {
+function postToAnthropic(
+  requestBody: AnthropicRequestBody,
+  apiKey: string,
+  model: string
+): Promise<AxiosResponse<AnthropicResponse>> {
   const url = 'https://api.anthropic.com/v1/messages';
   const headers = model.startsWith('claude-sonnet')
     ? {
@@ -49,10 +79,10 @@ function postToAnthropic(requestBody: any, apiKey: string, model: string): Promi
       };
   const body = { ...requestBody, model };
 
-  return axios.post(url, body, { headers });
+  return axios.post<AnthropicResponse>(url, body, { headers });
 }
 
-function createErrorResponse(errorMessage: string, model: string): any {
+function createErrorResponse(errorMessage: string, model: string): AnthropicResponse {
   return {
     content: [
       {
@@ -71,14 +101,14 @@ function createErrorResponse(errorMessage: string, model: string): any {
   };
 }
 
-function transformSuccessResponse(data: any): any {
+function transformSuccessResponse(data: AnthropicResponse): AnthropicResponse {
   if (data && Array.isArray(data.content)) {
     const textBlocks = data.content.filter(
-      (block: any) => block && block.type === 'text' && typeof block.text === 'string'
+      (block: ContentBlock) => block && block.type === 'text' && typeof block.text === 'string'
     );
 
     if (textBlocks.length > 0) {
-      const combinedText = textBlocks.map((b: any) => b.text).join('\n\n');
+      const combinedText = textBlocks.map((b: ContentBlock) => b.text).join('\n\n');
       data.content = [
         {
           type: 'text',
@@ -109,3 +139,4 @@ const handlePrompt = createPromptHandler(processPrompt, 'Anthropic');
 const app = createApp(handlePrompt, 'Anthropic');
 
 startServer(app, port, db.removeDatabaseFile);
+

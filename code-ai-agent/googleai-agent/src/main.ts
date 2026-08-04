@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import * as db from './db';
 import {
   setDbStore,
@@ -22,9 +22,34 @@ setDbStore({
   removeDatabaseFile: db.removeDatabaseFile,
 });
 
-type Step = { type: 'user_input' | 'model_output'; content: Array<{ type: 'text'; text: string }> };
+export type Step = {
+  type: 'user_input' | 'model_output';
+  content: Array<{ type: 'text'; text: string }>;
+};
 
-async function buildRequestBody(instructions: string, model: string): Promise<any> {
+export interface GenerationConfig {
+  temperature: number;
+  top_p: number;
+  thinking_level?: string;
+}
+
+export interface GoogleAIRequestBody {
+  model: string;
+  input: Step[];
+  generation_config: GenerationConfig;
+  system_instruction?: string;
+}
+
+export interface GoogleAIResponse {
+  steps: Step[];
+  usage: {
+    total_tokens?: number;
+    total_input_tokens?: number;
+    total_output_tokens?: number;
+  };
+}
+
+async function buildRequestBody(instructions: string, model: string): Promise<GoogleAIRequestBody> {
   const conversationMessages = await buildConversationMessages();
 
   const input: Step[] = conversationMessages.map((msg) => ({
@@ -32,7 +57,7 @@ async function buildRequestBody(instructions: string, model: string): Promise<an
     content: [{ type: 'text', text: msg.content }],
   }));
 
-  const requestBody: any = {
+  const requestBody: GoogleAIRequestBody = {
     model,
     input,
     generation_config: {
@@ -64,9 +89,9 @@ async function buildRequestBody(instructions: string, model: string): Promise<an
   return requestBody;
 }
 
-function postToGoogleAI(requestBody: any, apiKey: string): Promise<any> {
+function postToGoogleAI(requestBody: GoogleAIRequestBody, apiKey: string): Promise<AxiosResponse<GoogleAIResponse>> {
   const url = `https://generativelanguage.googleapis.com/v1beta/interactions`;
-  return axios.post(url, requestBody, {
+  return axios.post<GoogleAIResponse>(url, requestBody, {
     headers: {
       'Content-Type': 'application/json',
       'x-goog-api-key': apiKey,
@@ -75,7 +100,7 @@ function postToGoogleAI(requestBody: any, apiKey: string): Promise<any> {
   });
 }
 
-function createErrorResponse(errorMessage: string): any {
+function createErrorResponse(errorMessage: string): GoogleAIResponse {
   return {
     steps: [
       {
